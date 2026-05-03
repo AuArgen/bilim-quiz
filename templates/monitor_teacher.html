@@ -15,6 +15,11 @@
       style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);"
       x-data="teacherMonitor({{with .Data}}{{.Session.ID}}{{end}}, {{with .Data}}{{len .Questions}}{{end}})">
 
+  <!-- BGM Audio -->
+  <audio id="bgm" loop preload="auto">
+    <source src="/static/audio/lobby.mp3" type="audio/mpeg"/>
+  </audio>
+
   <!-- Stars background -->
   <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden">
     <div class="stars-layer"></div>
@@ -41,7 +46,25 @@
       </h1>
     </div>
 
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
+      <!-- Music toggle -->
+      <button @click="toggleMusic()"
+              class="flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-300 hover:scale-105"
+              :style="musicPlaying
+                ? 'background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.4);'
+                : 'background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);'">
+        <span class="text-xl transition-all" x-text="musicPlaying ? '🔊' : '🔇'"></span>
+        <span class="text-xs font-black uppercase tracking-wider"
+              :style="musicPlaying ? 'color: #a78bfa;' : 'color: rgba(255,255,255,0.3);'"
+              x-text="musicPlaying ? 'BGM' : 'BGM'"></span>
+        <!-- Equalizer bars -->
+        <div x-show="musicPlaying" class="flex items-end gap-0.5 h-4">
+          <div class="w-1 rounded-full bg-purple-400 eq-bar" style="animation-delay:0s"></div>
+          <div class="w-1 rounded-full bg-purple-400 eq-bar" style="animation-delay:0.2s"></div>
+          <div class="w-1 rounded-full bg-purple-400 eq-bar" style="animation-delay:0.4s"></div>
+        </div>
+      </button>
+
       <div class="flex items-center gap-2 px-4 py-2 rounded-xl border"
            style="background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1);">
         <span class="text-xl">👥</span>
@@ -218,9 +241,22 @@ function teacherMonitor(sessionId, totalQuestions) {
     totalQuestions,
     playerList: initPlayers,
     ws: null,
+    musicPlaying: false,
 
     get playerCount() { return this.playerList.length; },
     get sortedPlayers() { return [...this.playerList].sort((a,b) => b.score - a.score); },
+
+    toggleMusic() {
+      const audio = document.getElementById('bgm');
+      if (!audio) return;
+      if (this.musicPlaying) {
+        audio.pause();
+        this.musicPlaying = false;
+      } else {
+        audio.volume = 0.45;
+        audio.play().then(() => { this.musicPlaying = true; }).catch(() => {});
+      }
+    },
 
     get trackPath() {
       if (this.totalQuestions === 0) return '';
@@ -234,6 +270,22 @@ function teacherMonitor(sessionId, totalQuestions) {
     },
 
     init() {
+      // Autoplay on first interaction (browsers block silent autoplay)
+      const tryPlay = () => {
+        const audio = document.getElementById('bgm');
+        if (audio && !this.musicPlaying) {
+          audio.volume = 0.45;
+          audio.play().then(() => {
+            this.musicPlaying = true;
+            document.removeEventListener('click', tryPlay);
+            document.removeEventListener('keydown', tryPlay);
+          }).catch(() => {});
+        }
+      };
+      tryPlay(); // try immediately (if already had interaction)
+      document.addEventListener('click', tryPlay);
+      document.addEventListener('keydown', tryPlay);
+
       this.ws = createWS(`/ws/teacher/${sessionId}`, (msg) => {
         if (msg.type === 'player_progress') {
           const p = this.playerList.find(x => x.id === msg.payload.player_id);
@@ -345,6 +397,15 @@ function teacherMonitor(sessionId, totalQuestions) {
 
   #leaderboard-list > div {
     transition: transform 0.5s cubic-bezier(0.4,0,0.2,1), background-color 0.3s;
+  }
+
+  .eq-bar {
+    height: 4px;
+    animation: eqBounce 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes eqBounce {
+    0%   { height: 3px; }
+    100% { height: 14px; }
   }
 </style>
 </body>
