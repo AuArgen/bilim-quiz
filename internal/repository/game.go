@@ -14,17 +14,18 @@ func (r *GameRepo) Create(ctx context.Context, g *Game) (*Game, error) {
 	row := r.db.QueryRow(ctx,
 		`INSERT INTO games (teacher_id, title, description)
 		 VALUES ($1, $2, $3)
-		 RETURNING id, teacher_id, title, description, created_at, updated_at`,
+		 RETURNING id, teacher_id, title, description, share_token, created_at, updated_at`,
 		g.TeacherID, g.Title, g.Description)
 	out := &Game{}
-	err := row.Scan(&out.ID, &out.TeacherID, &out.Title, &out.Description, &out.CreatedAt, &out.UpdatedAt)
+	err := row.Scan(&out.ID, &out.TeacherID, &out.Title, &out.Description,
+		&out.ShareToken, &out.CreatedAt, &out.UpdatedAt)
 	return out, err
 }
 
 func (r *GameRepo) GetByID(ctx context.Context, id int) (*Game, error) {
 	row := r.db.QueryRow(ctx,
 		`SELECT g.id, g.teacher_id, g.title, g.description,
-		        COUNT(q.id) AS question_count,
+		        g.share_token, COUNT(q.id) AS question_count,
 		        g.created_at, g.updated_at
 		 FROM games g
 		 LEFT JOIN questions q ON q.game_id = g.id
@@ -32,14 +33,29 @@ func (r *GameRepo) GetByID(ctx context.Context, id int) (*Game, error) {
 		 GROUP BY g.id`, id)
 	out := &Game{}
 	err := row.Scan(&out.ID, &out.TeacherID, &out.Title, &out.Description,
-		&out.QuestionCount, &out.CreatedAt, &out.UpdatedAt)
+		&out.ShareToken, &out.QuestionCount, &out.CreatedAt, &out.UpdatedAt)
+	return out, err
+}
+
+func (r *GameRepo) GetByShareToken(ctx context.Context, token string) (*Game, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT g.id, g.teacher_id, g.title, g.description,
+		        g.share_token, COUNT(q.id) AS question_count,
+		        g.created_at, g.updated_at
+		 FROM games g
+		 LEFT JOIN questions q ON q.game_id = g.id
+		 WHERE g.share_token = $1
+		 GROUP BY g.id`, token)
+	out := &Game{}
+	err := row.Scan(&out.ID, &out.TeacherID, &out.Title, &out.Description,
+		&out.ShareToken, &out.QuestionCount, &out.CreatedAt, &out.UpdatedAt)
 	return out, err
 }
 
 func (r *GameRepo) ListByTeacher(ctx context.Context, teacherID int) ([]Game, error) {
 	rows, err := r.db.Query(ctx,
 		`SELECT g.id, g.teacher_id, g.title, g.description,
-		        COUNT(q.id) AS question_count,
+		        g.share_token, COUNT(q.id) AS question_count,
 		        g.created_at, g.updated_at
 		 FROM games g
 		 LEFT JOIN questions q ON q.game_id = g.id
@@ -55,7 +71,7 @@ func (r *GameRepo) ListByTeacher(ctx context.Context, teacherID int) ([]Game, er
 	for rows.Next() {
 		var g Game
 		if err := rows.Scan(&g.ID, &g.TeacherID, &g.Title, &g.Description,
-			&g.QuestionCount, &g.CreatedAt, &g.UpdatedAt); err != nil {
+			&g.ShareToken, &g.QuestionCount, &g.CreatedAt, &g.UpdatedAt); err != nil {
 			return nil, err
 		}
 		games = append(games, g)

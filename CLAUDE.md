@@ -28,35 +28,37 @@ docker compose up -d --build # баарын баштоо
 cmd/server/main.go           # Entrypoint — роутер, middleware, бардыгын байлоо
 internal/
   auth/
-    session.go               # Cookie session (gorilla/sessions): SetTeacherID, GetTeacherID
+    session.go               # Cookie session: SetTeacherID, GetTeacherID,
+                             #   SetRedirectAfterLogin, GetRedirectAfterLogin, ClearRedirectAfterLogin
     oauth.go                 # Google OAuth2: GetAuthURL, ExchangeCode → GoogleUser
   db/
     db.go                    # pgxpool.New() + Migrate() runner (migrations/*.sql)
   repository/
-    models.go                # Бардык struct'тар: Teacher, Game, Question, Session...
+    models.go                # Бардык struct'тар: Teacher, Game (ShareToken кирет), Question, Session...
     teacher.go               # Upsert (Google login), GetByID, GetStats, UpdateGeminiKey
-    game.go                  # CRUD + QuestionCount JOIN
+    game.go                  # CRUD + QuestionCount JOIN + GetByShareToken
     question.go              # CRUD + ReplaceAnswers (delete-insert)
     session.go               # Create, GetByPin, Snapshot, AddPlayer, SavePlayerAnswer, Leaderboard
   game/
     hub.go                   # Global Hub — rooms map[pin]*Room, GeneratePin()
     room.go                  # Room: register/unregister channels, broadcastAll, kickPlayer
     client.go                # WebSocket Client: ReadPump / WritePump goroutines
-    engine.go                # startGame → runAsync → handleAnswer → upай эсептөө
+    engine.go                # startGame → runAsync → handleAnswer → упай эсептөө
     types.go                 # GameState, Message, SnapshotQuestion, AnswerMsg
   handlers/
     render.go                # LoadTemplates + Render(w,r,name,data) + funcMap (t, appName, inc, fmtTime, ms2s, jsonQuestions, jsonPlayers)
-    auth.go                  # GoogleLogin, GoogleCallback, Logout
+    auth.go                  # GoogleLogin (?next= колдоосу), GoogleCallback (redirect_after_login), Logout
     teacher.go               # Dashboard, SaveGeminiKey
     game.go                  # NewGame, CreateGame, EditGame, UpdateGame, DeleteGame, AddQuestion, UpdateQuestion, DeleteQuestion
     student.go               # JoinPage, CheckPin, LobbyPage, JoinLobby, PlayPage, ResultPage
     play.go                  # StartSession (PIN генерация + Snapshot), LobbyPage, LobbyPlayers, MonitorPage, PodiumPage
+    shared.go                # SharedHandler: GamePage (GET /shared/{token}), StartSession (POST /shared/{token}/start)
     ws.go                    # TeacherLobbyWS, PlayerWS (WebSocket upgrade)
     history.go               # List, SessionDetail, PlayerDetail
     ai.go                    # Generate (Gemini API → DB сактоо)
     upload.go                # UploadPlayerImage (Base64 data URI → player_images/)
   middleware/
-    auth.go                  # RequireAuth — teacher_id cookie жок болсо / redirect
+    auth.go                  # RequireAuth — авторизациясыз болсо URL session'го сактап /auth/google'га redirect
     lang.go                  # Lang — query→cookie→Accept-Language→"ky" + cookie сет
     logger.go                # HTTP request logger
   i18n/
@@ -68,11 +70,12 @@ internal/
 migrations/
   001_init.sql               # teachers, games, questions, answers + update_updated_at trigger
   002_sessions.sql           # game_sessions, session_questions_snapshot, session_answers_snapshot, session_players, player_answers
+  003_share_token.sql        # games.share_token UUID NOT NULL DEFAULT gen_random_uuid()
 locales/
-  ky.json / ru.json / en.json  # 58 UI текст ачкычы
+  ky.json / ru.json / en.json  # 64 UI текст ачкычы (share_game, share_link, share_copy, share_copied, shared_start_session, shared_logged_in кирет)
 templates/
   landing.html               # Башкы бет: PIN форма + Google login + lang modal
-  dashboard.html             # Мугалим кабинети: stats + games table + Gemini key
+  dashboard.html             # Мугалим кабинети: stats + games table + Gemini key + 🔗 Share dropdown
   game_builder.html          # Оюн редактору: сол панел (суроолор) + форма (Alpine.js)
   join.html                  # Окуучу: PIN киргизүү
   lobby_student.html         # Окуучу: ат + аватар тандоо → күтүү залы
@@ -84,6 +87,7 @@ templates/
   history_list.html          # Тарых: сессиялар тизмеси
   history_session.html       # Тарых: сессиянын оюнчулар рейтинги
   history_player.html        # Тарых: жеке окуучунун жооп аналитикасы
+  shared_game.html           # Бөлүшүлгөн оюн: аталышы, автору, суроолор саны + Сессия баштоо
 static/
   css/app.css                # Tailwind utility класстары (btn-primary, card, input, label...)
   js/app.js                  # compressAndUpload (Canvas API), createWS (WebSocket helper)
@@ -97,8 +101,8 @@ player_images/               # Окуучулардын аватарлары (Ba
 | URL | Метод | Аракет |
 |-----|-------|--------|
 | `/` | GET | Landing page |
-| `/auth/google` | GET | Google OAuth redirect |
-| `/auth/google/callback` | GET | OAuth callback |
+| `/auth/google` | GET | Google OAuth redirect (`?next=` param колдоосу бар) |
+| `/auth/google/callback` | GET | OAuth callback → session'дон redirect URL окуп redirect |
 | `/logout` | GET | Session тазалоо |
 | `/lang/{ky\|ru\|en}` | GET | Тил өзгөртүү cookie |
 | `/join` | GET | PIN форма |
@@ -131,6 +135,8 @@ player_images/               # Окуучулардын аватарлары (Ba
 | `/history/{id}` | GET | Сессия деталы |
 | `/history/{id}/player/{player_id}` | GET | Окуучу аналитикасы |
 | `/api/ai/generate` | POST | Gemini AI суроо генерациясы |
+| `/shared/{token}` | GET | Бөлүшүлгөн оюн барагы |
+| `/shared/{token}/start` | POST | Кирген мугалим сессия баштайт |
 
 ## WebSocket протоколу
 
@@ -163,7 +169,7 @@ player_images/               # Окуучулардын аватарлары (Ba
 
 ### Негизги таблицалар (өзгөртүлөт)
 - `teachers` — google_id, email, name, avatar_url, language, gemini_key
-- `games` — teacher_id, title, description
+- `games` — teacher_id, title, description, **share_token** (UUID, auto-generated, unique)
 - `questions` — game_id, position, content, image_url, youtube_url, youtube_start/end, time_limit, score_type (`dynamic`\|`static`), static_score
 - `answers` — question_id, text, is_correct
 
@@ -221,10 +227,14 @@ PLAYER_IMAGES_DIR=./player_images
 
 1. **Snapshot pattern** — оюн башталганда `session_questions_snapshot` + `session_answers_snapshot` таблицаларына маалымат жазылат. Тарыхтагы баллдар суроо өзгөртүлгөндөн кийин да бузулбайт.
 
-2. **Асинхрондук gameplay** — Каждый окуучу өзүнүн ылдамдыгы менен жооп берет. Мугалим башкаларды күтпөстөн монитордон ар кимдин прогрессин көрөт.
+2. **Асинхрондук gameplay** — Ар бир окуучу өзүнүн ылдамдыгы менен жооп берет. Мугалим башкаларды күтпөстөн монитордон ар кимдин прогрессин көрөт.
 
 3. **WebSocket Hub** — `game.Global` — жалгыз hub, `map[pin]*Room`. Мугалим `/ws/teacher/{session_id}` аркылуу room түзөт; окуучулар `/ws/player/{pin}/{player_id}` аркылуу кошулат.
 
 4. **Canvas компрессия** — Окуучунун аватар сүрөтү JavaScript Canvas API аркылуу client-side'да 120×120px'ге кысылат, андан кийин Base64 POST жасалат. Сервер тарапта `/upload/avatar` эндпоинти JPEG файлды `player_images/` папкасына сактайт.
 
 5. **Тил middleware** — Ар бир request'те `middleware.Lang` тилди аныктап, `context.WithValue` аркылуу тил кодун өткөрөт. Бардык шаблондор `{{t .Lang "key"}}` аркылуу которулат.
+
+6. **Post-login redirect** — `RequireAuth` middleware авторизациясыз кирүүдө `r.RequestURI` session'го (`redirect_after_login` ачкычы) сактайт да `/auth/google`'га redirect кылат. `GoogleCallback` ийгиликтүү логин кийин ошол URL'га кайтат, болбосо `/dashboard`'га.
+
+7. **Game share link** — Ар бир оюндун `share_token` UUID'си бар (auto-generated). Dashboard'дан `🔗` баскычы менен `http://host/shared/{token}` шилтемесин clipboard'го көчүрүүгө болот. Шилтеме менен кирген адам авторизациядан өткөндөн кийин оюнду өзүнүн атынан сессия катары баштай алат.

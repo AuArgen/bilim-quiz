@@ -85,5 +85,11 @@
   "error_session_not_found": "Сессия табылган жок",
   "error_name_required": "Аты милдеттүү",
   "login_with_google": "Google аркылуу кирүү",
-  "landing_hero": "Билимди оюн менен сына!"
+  "landing_hero": "Билимди оюн менен сына!",
+  "share_game": "Бөлүшүү",
+  "share_link": "Шилтеме",
+  "share_copy": "Көчүрүү",
+  "share_copied": "Көчүрүлдү!",
+  "shared_start_session": "Сессия баштоо",
+  "shared_logged_in": "Авторизацияланган"
 }

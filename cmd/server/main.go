@@ -61,6 +61,7 @@ func main() {
 	studentH := handlers.NewStudentHandler(sessionRepo, questionRepo)
 	playH    := handlers.NewPlayHandler(gameRepo, sessionRepo, questionRepo)
 	wsH      := handlers.NewWSHandler(sessionRepo, questionRepo)
+	sharedH  := handlers.NewSharedHandler(gameRepo, sessionRepo, questionRepo, teacherRepo)
 
 	r := chi.NewRouter()
 
@@ -140,6 +141,13 @@ func main() {
 
 		// AI
 		r.Post("/api/ai/generate", aiH.Generate)
+	})
+
+	// Shared game routes (require auth)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireAuth)
+		r.Get("/shared/{token}", sharedH.GamePage)
+		r.Post("/shared/{token}/start", sharedH.StartSession)
 	})
 
 	// WebSocket (student — public, no auth)

@@ -14,13 +14,14 @@ type Teacher struct {
 }
 
 type Game struct {
-	ID          int
-	TeacherID   int
-	Title       string
-	Description string
+	ID            int
+	TeacherID     int
+	Title         string
+	Description   string
 	QuestionCount int
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ShareToken    string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type Question struct {

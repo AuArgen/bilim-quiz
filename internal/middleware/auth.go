@@ -10,7 +10,8 @@ func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, ok := auth.GetTeacherID(r)
 		if !ok {
-			http.Redirect(w, r, "/", http.StatusFound)
+			auth.SetRedirectAfterLogin(w, r, r.RequestURI)
+			http.Redirect(w, r, "/auth/google", http.StatusFound)
 			return
 		}
 		next.ServeHTTP(w, r)

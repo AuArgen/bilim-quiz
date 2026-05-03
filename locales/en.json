@@ -85,5 +85,11 @@
   "error_session_not_found": "Session not found",
   "error_name_required": "Name is required",
   "login_with_google": "Login with Google",
-  "landing_hero": "Test knowledge through play!"
+  "landing_hero": "Test knowledge through play!",
+  "share_game": "Share",
+  "share_link": "Link",
+  "share_copy": "Copy",
+  "share_copied": "Copied!",
+  "shared_start_session": "Start Session",
+  "shared_logged_in": "You are logged in"
 }

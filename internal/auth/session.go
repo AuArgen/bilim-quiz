@@ -47,6 +47,30 @@ func GetTeacherID(r *http.Request) (int, bool) {
 	return id, ok
 }
 
+func SetRedirectAfterLogin(w http.ResponseWriter, r *http.Request, url string) error {
+	sess, err := store.Get(r, sessionName)
+	if err != nil {
+		return err
+	}
+	sess.Values["redirect_after_login"] = url
+	return sess.Save(r, w)
+}
+
+func GetRedirectAfterLogin(r *http.Request) string {
+	sess, err := store.Get(r, sessionName)
+	if err != nil {
+		return ""
+	}
+	url, _ := sess.Values["redirect_after_login"].(string)
+	return url
+}
+
+func ClearRedirectAfterLogin(w http.ResponseWriter, r *http.Request) {
+	sess, _ := store.Get(r, sessionName)
+	delete(sess.Values, "redirect_after_login")
+	sess.Save(r, w)
+}
+
 func ClearSession(w http.ResponseWriter, r *http.Request) error {
 	sess, err := store.Get(r, sessionName)
 	if err != nil {

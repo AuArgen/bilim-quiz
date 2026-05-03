@@ -20,6 +20,10 @@ func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
+	// Support explicit ?next= param (e.g., from shared links)
+	if next := r.URL.Query().Get("next"); next != "" {
+		auth.SetRedirectAfterLogin(w, r, next)
+	}
 	url := auth.GetAuthURL(w, r)
 	http.Redirect(w, r, url, http.StatusFound)
 }
@@ -47,6 +51,13 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	if err := auth.SetTeacherID(w, r, teacher.ID); err != nil {
 		http.Error(w, "Session error", http.StatusInternalServerError)
+		return
+	}
+
+	redirectTo := auth.GetRedirectAfterLogin(r)
+	if redirectTo != "" {
+		auth.ClearRedirectAfterLogin(w, r)
+		http.Redirect(w, r, redirectTo, http.StatusFound)
 		return
 	}
 

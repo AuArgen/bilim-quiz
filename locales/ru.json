@@ -85,5 +85,11 @@
   "error_session_not_found": "Сессия не найдена",
   "error_name_required": "Имя обязательно",
   "login_with_google": "Войти через Google",
-  "landing_hero": "Проверяй знания играя!"
+  "landing_hero": "Проверяй знания играя!",
+  "share_game": "Поделиться",
+  "share_link": "Ссылка",
+  "share_copy": "Копировать",
+  "share_copied": "Скопировано!",
+  "shared_start_session": "Начать сессию",
+  "shared_logged_in": "Вы авторизованы"
 }

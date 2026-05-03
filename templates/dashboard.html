@@ -192,6 +192,26 @@
                     <a href="/play/{{$g.ID}}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-info/10 text-info hover:bg-info hover:text-white transition-colors" title="{{t $.Lang "play_game"}}">▶</a>
                     <a href="/games/{{$g.ID}}/edit" class="w-8 h-8 flex items-center justify-center rounded-lg bg-warning/10 text-amber-500 hover:bg-warning hover:text-white transition-colors" title="Edit">✏️</a>
                     <a href="/history?game_id={{$g.ID}}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors" title="History">📋</a>
+                    <!-- Share button with dropdown -->
+                    <div x-data="{open:false, copied:false}" class="relative inline-block">
+                      <button @click="open=!open" @click.outside="open=false"
+                              class="w-8 h-8 flex items-center justify-center rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
+                              title="{{t $.Lang "share_game"}}">🔗</button>
+                      <div x-show="open" x-transition
+                           class="absolute right-0 top-full mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 w-80">
+                        <p class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{{t $.Lang "share_link"}}</p>
+                        <div class="flex gap-2">
+                          <input type="text" readonly
+                                 :value="`${window.location.origin}/shared/{{$g.ShareToken}}`"
+                                 class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-700 min-w-0"/>
+                          <button @click="navigator.clipboard.writeText(`${window.location.origin}/shared/{{$g.ShareToken}}`).then(()=>{copied=true;setTimeout(()=>copied=false,2000)})"
+                                  class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                                  :class="copied ? 'bg-success text-white' : 'bg-primary text-white hover:bg-primary-hover'">
+                            <span x-text="copied ? '{{t $.Lang "share_copied"}}' : '{{t $.Lang "share_copy"}}'"></span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                     <form method="POST" action="/games/{{$g.ID}}/delete" onsubmit="return confirm('{{t $.Lang "confirm_delete"}}')" class="inline-block">
                       <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors" title="Delete">🗑</button>
                     </form>
