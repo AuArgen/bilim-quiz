@@ -10,19 +10,20 @@ type TeacherRepo struct{ db *pgxpool.Pool }
 
 func NewTeacherRepo(db *pgxpool.Pool) *TeacherRepo { return &TeacherRepo{db: db} }
 
-func (r *TeacherRepo) Upsert(ctx context.Context, t *Teacher) (*Teacher, error) {
+func (r *TeacherRepo) Upsert(ctx context.Context, t *Teacher) (*Teacher, bool, error) {
 	row := r.db.QueryRow(ctx, `
 		INSERT INTO teachers (google_id, email, name, avatar_url)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (google_id) DO UPDATE
 		  SET email=$2, name=$3, avatar_url=$4
-		RETURNING id, google_id, email, name, avatar_url, language, gemini_key, created_at`,
+		RETURNING id, google_id, email, name, avatar_url, language, gemini_key, created_at, (xmax = 0)`,
 		t.GoogleID, t.Email, t.Name, t.AvatarURL,
 	)
 	out := &Teacher{}
+	var isNew bool
 	err := row.Scan(&out.ID, &out.GoogleID, &out.Email, &out.Name,
-		&out.AvatarURL, &out.Language, &out.GeminiKey, &out.CreatedAt)
-	return out, err
+		&out.AvatarURL, &out.Language, &out.GeminiKey, &out.CreatedAt, &isNew)
+	return out, isNew, err
 }
 
 func (r *TeacherRepo) GetByID(ctx context.Context, id int) (*Teacher, error) {

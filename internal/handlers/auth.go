@@ -1,18 +1,21 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"bilim-quiz/internal/auth"
+	"bilim-quiz/internal/onboarding"
 	"bilim-quiz/internal/repository"
 )
 
 type AuthHandler struct {
-	teachers *repository.TeacherRepo
+	teachers  *repository.TeacherRepo
+	onboarding onboarding.Deps
 }
 
-func NewAuthHandler(teachers *repository.TeacherRepo) *AuthHandler {
-	return &AuthHandler{teachers: teachers}
+func NewAuthHandler(teachers *repository.TeacherRepo, ob onboarding.Deps) *AuthHandler {
+	return &AuthHandler{teachers: teachers, onboarding: ob}
 }
 
 func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +41,7 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	teacher, err := h.teachers.Upsert(r.Context(), &repository.Teacher{
+	teacher, isNew, err := h.teachers.Upsert(r.Context(), &repository.Teacher{
 		GoogleID:  gUser.ID,
 		Email:     gUser.Email,
 		Name:      gUser.Name,
@@ -47,6 +50,12 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "DB error", http.StatusInternalServerError)
 		return
+	}
+
+	if isNew {
+		if err := onboarding.SeedDemoGame(r.Context(), h.onboarding, teacher.ID); err != nil {
+			log.Printf("onboarding seed failed for teacher %d: %v", teacher.ID, err)
+		}
 	}
 
 	if err := auth.SetTeacherID(w, r, teacher.ID); err != nil {

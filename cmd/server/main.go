@@ -15,6 +15,7 @@ import (
 	"bilim-quiz/internal/handlers"
 	"bilim-quiz/internal/i18n"
 	"bilim-quiz/internal/middleware"
+	"bilim-quiz/internal/onboarding"
 	"bilim-quiz/internal/qr"
 	"bilim-quiz/internal/repository"
 )
@@ -53,7 +54,8 @@ func main() {
 	sessionRepo := repository.NewSessionRepo(pool)
 
 	// Handlers
-	authH    := handlers.NewAuthHandler(teacherRepo)
+	ob := onboarding.Deps{Games: gameRepo, Questions: questionRepo}
+	authH    := handlers.NewAuthHandler(teacherRepo, ob)
 	teacherH := handlers.NewTeacherHandler(teacherRepo, gameRepo)
 	historyH := handlers.NewHistoryHandler(sessionRepo, gameRepo, teacherRepo)
 	aiH      := handlers.NewAIHandler(teacherRepo, questionRepo)
