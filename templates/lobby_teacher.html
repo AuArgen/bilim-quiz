@@ -1,0 +1,225 @@
+{{define "lobby_teacher.html"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{appName}} — Lobby</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script src="/static/js/app.js"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+</head>
+<body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/20 relative overflow-x-hidden"
+      x-data="teacherLobby({{with .Data}}{{.Session.ID}}{{end}}, '{{with .Data}}{{.Session.PinCode}}{{end}}')">
+
+  <!-- Decorative Background Blobs -->
+  <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+    <div class="absolute top-[20%] right-[-10%] w-[35vw] h-[35vw] bg-accent/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style="animation-delay: 2s"></div>
+    <div class="absolute bottom-[-20%] left-[30%] w-[50vw] h-[50vw] bg-info/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style="animation-delay: 4s"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-4 py-6 lg:py-10 relative z-10 flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <div class="bg-white/80 backdrop-blur-xl border border-white rounded-2xl shadow-sm px-6 py-4 mb-8 flex items-center justify-between animate-fade-in-up">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-2xl shadow-inner">🏆</div>
+        <div>
+          <h1 class="text-2xl font-black text-slate-800 tracking-tight">{{with .Data}}{{with .Game}}{{.Title}}{{end}}{{end}}</h1>
+          <div class="flex items-center gap-2 text-sm font-bold text-slate-500 mt-0.5">
+            <span class="w-2 h-2 rounded-full bg-warning animate-pulse"></span>
+            {{t .Lang "waiting_players"}}...
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- BGM Toggle Button -->
+        <button @click="toggleAudio()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors shadow-sm border border-slate-200" title="Музыканы күйгүзүү/өчүрүү">
+          <span x-show="audioEnabled" class="text-lg">🔊</span>
+          <span x-show="!audioEnabled" class="text-lg">🔇</span>
+        </button>
+        <a href="/dashboard" class="bg-white hover:bg-red-50 text-slate-600 hover:text-red-500 border border-slate-200 hover:border-red-200 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+          ✕ {{t .Lang "cancel"}}
+        </a>
+      </div>
+    </div>
+
+    <!-- PIN + QR Section (Made for Big Screens/Projectors) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      
+      <!-- Big PIN Card -->
+      <div class="lg:col-span-2 bg-white/90 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-xl p-8 md:p-12 text-center flex flex-col justify-center items-center relative overflow-hidden animate-fade-in-up" style="animation-delay: 0.1s">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+        <p class="text-slate-500 text-lg md:text-xl font-bold uppercase tracking-[0.2em] mb-4 relative z-10">{{t .Lang "join_game"}}</p>
+        <div class="text-7xl md:text-[8rem] leading-none font-black tracking-[0.2em] pl-[0.2em] text-slate-800 mb-6 drop-shadow-md relative z-10">
+          {{with .Data}}{{.Session.PinCode}}{{end}}
+        </div>
+        <div class="inline-flex items-center gap-3 bg-slate-800 text-white px-6 py-2 rounded-full shadow-lg relative z-10">
+          <span class="text-sm font-medium">Сайтка кириңиз:</span>
+          <span class="text-lg font-bold">bilimquiz.com</span>
+        </div>
+      </div>
+
+      <!-- QR Code Card -->
+      <div class="bg-white/90 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-xl p-8 flex flex-col items-center justify-center animate-fade-in-up" style="animation-delay: 0.2s">
+        <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mb-4">QR Код</p>
+        <div id="qr-container" class="w-48 h-48 bg-white rounded-2xl flex items-center justify-center shadow-inner border-4 border-slate-50 p-2 transform hover:scale-105 transition-transform duration-300">
+          <img id="qr-img" src="/qr/{{with .Data}}{{.Session.PinCode}}{{end}}" class="w-full h-full rounded-xl" alt="QR Code"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Players Grid & Controls -->
+    <div class="flex-1 flex flex-col bg-white/80 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-lg p-8 animate-fade-in-up" style="animation-delay: 0.3s">
+      
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3">
+          <span class="text-3xl">👥</span>
+          {{t .Lang "players_joined"}}: <span class="bg-primary/10 text-primary px-3 py-1 rounded-xl border border-primary/20" x-text="players.length"></span>
+        </h2>
+        
+        <!-- Start Game Button -->
+        <button @click="startGame()"
+                :disabled="players.length===0 || starting"
+                class="bg-success hover:bg-emerald-500 disabled:bg-slate-300 disabled:shadow-none text-white text-xl font-black py-4 px-10 rounded-2xl shadow-lg shadow-success/40 transition-all duration-300 flex items-center justify-center gap-3 group hover:-translate-y-1 disabled:transform-none">
+          <span x-show="starting" class="animate-spin inline-block">⏳</span>
+          <span x-show="!starting" class="text-2xl group-hover:animate-bounce">🚀</span> 
+          <span>{{t .Lang "start_game"}}</span>
+        </button>
+      </div>
+
+      <!-- Players List -->
+      <div class="flex-1 min-h-[200px]">
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4" id="players-grid">
+          <template x-for="p in players" :key="p.id">
+            <div class="flex flex-col items-center gap-2 relative group animate-pop-in">
+              <!-- Avatar -->
+              <div class="w-16 h-16 rounded-full bg-white border-2 border-slate-200 shadow-md group-hover:border-primary/50 group-hover:shadow-lg flex items-center justify-center text-4xl transition-all duration-300 transform group-hover:scale-110 group-hover:-translate-y-1">
+                <span x-text="p.avatar.startsWith('/') ? '' : p.avatar"></span>
+                <img x-show="p.avatar.startsWith('/')" :src="p.avatar" class="w-full h-full rounded-full object-cover"/>
+              </div>
+              
+              <!-- Nickname -->
+              <span class="text-xs text-slate-700 font-bold text-center truncate w-full px-1 bg-white/50 rounded-md" x-text="p.nickname"></span>
+              
+              <!-- Kick Button -->
+              <button @click="kickPlayer(p.id)" title="Оюнчуну чыгаруу"
+                      class="absolute -top-1 -right-1 w-6 h-6 bg-accent hover:bg-red-500 text-white rounded-full text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center transform hover:scale-110">✕</button>
+            </div>
+          </template>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="players.length===0" class="h-full flex flex-col items-center justify-center text-slate-400 opacity-70 pt-10">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-4 h-4 rounded-full bg-slate-300 animate-bounce"></div>
+            <div class="w-4 h-4 rounded-full bg-slate-300 animate-bounce" style="animation-delay: 0.15s"></div>
+            <div class="w-4 h-4 rounded-full bg-slate-300 animate-bounce" style="animation-delay: 0.3s"></div>
+          </div>
+          <p class="text-lg font-bold">{{t .Lang "waiting_players"}}</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- BGM -->
+  <audio id="bgm" loop>
+    <source src="/static/audio/lobby.mp3" type="audio/mpeg"/>
+  </audio>
+
+<script>
+function teacherLobby(sessionId, pin) {
+  return {
+    sessionId, pin,
+    ws: null,
+    players: [],
+    starting: false,
+    audioEnabled: false,
+    audioElem: null,
+
+    init() {
+      this.audioElem = document.getElementById('bgm');
+      // Браузерлер авто-плейди блоктойт, ошондуктан колдонуучунун аракетисиз күйбөшү мүмкүн.
+      // Бирок аракет кылып көрөбүз:
+      if (this.audioElem) {
+        this.audioElem.volume = 0.4; // Жумшак үн
+        this.audioElem.play().then(() => {
+          this.audioEnabled = true;
+        }).catch(() => {
+          this.audioEnabled = false; // Авто-плей блокко түштү
+        });
+      }
+
+      this.ws = createWS(`/ws/teacher/${sessionId}`, (msg) => {
+        if (msg.type === 'lobby_update') {
+          this.fetchPlayers();
+        }
+        if (msg.type === 'game_start') {
+          location.href = `/teacher/monitor/${sessionId}`;
+        }
+      });
+      this.fetchPlayers();
+    },
+
+    toggleAudio() {
+      if (!this.audioElem) return;
+      if (this.audioEnabled) {
+        this.audioElem.pause();
+        this.audioEnabled = false;
+      } else {
+        this.audioElem.play().catch(()=>{});
+        this.audioEnabled = true;
+      }
+    },
+
+    async fetchPlayers() {
+      try {
+        const res = await fetch(`/teacher/lobby/${sessionId}/players`);
+        if (res.ok) this.players = await res.json();
+      } catch {}
+    },
+
+    kickPlayer(playerId) {
+      if (this.ws) {
+        this.ws.send(JSON.stringify({type: 'kick', player_id: playerId}));
+      }
+      this.players = this.players.filter(p => p.id !== playerId);
+    },
+
+    startGame() {
+      this.starting = true;
+      if (this.ws) {
+        this.ws.send(JSON.stringify({type: 'start_game'}));
+      }
+    },
+  };
+}
+</script>
+<style>
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  .animate-blob {
+    animation: blob 10s infinite;
+  }
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+    70% { transform: scale(1.1) translateY(-5px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-pop-in {
+    animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+</style>
+</body>
+</html>
+{{end}}

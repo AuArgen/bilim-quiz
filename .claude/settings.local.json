@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod *)",
+      "Bash(go get *)",
+      "Bash(go build *)",
+      "Bash(GONOSUMCHECK=* GOFLAGS=-mod=mod GONOSUMDB=* go build ./internal/...)",
+      "Bash(GOFLAGS=-mod=mod go build ./internal/...)",
+      "Bash(GOFLAGS=-mod=mod go build ./...)"
+    ]
+  }
+}

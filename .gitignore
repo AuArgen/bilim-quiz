@@ -1,0 +1,6 @@
+.env
+bin/
+player_images/*.jpg
+player_images/*.png
+player_images/*.jpeg
+*.exe

@@ -1,0 +1,243 @@
+{{define "monitor_teacher.html"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{appName}} — Live Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script src="/static/js/app.js"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-primary/20 relative overflow-hidden"
+      x-data="teacherMonitor({{with .Data}}{{.Session.ID}}{{end}}, {{with .Data}}{{len .Questions}}{{end}})">
+
+  <!-- Decorative Background Elements -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+    <div class="absolute bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-info/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style="animation-delay: 3s"></div>
+  </div>
+
+  <!-- Header Panel -->
+  <div class="bg-white/90 backdrop-blur-xl border-b border-white shadow-sm px-6 py-4 flex items-center justify-between relative z-20">
+    <div class="flex items-center gap-4">
+      <!-- Live Indicator -->
+      <div class="flex items-center gap-2 bg-red-50 text-red-500 border border-red-100 px-3 py-1.5 rounded-full shadow-inner">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+        </span>
+        <span class="text-xs font-black tracking-widest uppercase">Live</span>
+      </div>
+      <h1 class="font-black text-2xl text-slate-800 tracking-tight flex items-center gap-2">
+        <span>📊</span> {{t .Lang "leaderboard"}}
+      </h1>
+    </div>
+    
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
+        <span class="text-xl">👥</span>
+        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider">{{t .Lang "players_joined"}}:</span>
+        <strong x-text="playerCount" class="text-xl text-primary font-black ml-1"></strong>
+      </div>
+      <a :href="'/teacher/podium/'+sessionId" class="bg-primary hover:bg-primary-hover text-white text-sm font-bold py-2.5 px-6 rounded-xl shadow-md shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2">
+        🏆 {{t .Lang "final_results"}} <span class="text-lg">→</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="flex flex-1 overflow-hidden relative z-10 p-4 gap-4">
+
+    <!-- Race Track (Snake progress) -->
+    <div class="flex-1 bg-white/60 backdrop-blur-md rounded-[2rem] border border-white shadow-lg overflow-hidden relative flex flex-col p-6">
+      
+      <!-- Track Header -->
+      <div class="text-center mb-2 z-10">
+        <span class="inline-block bg-gradient-to-r from-success/20 to-info/20 border border-white px-6 py-2 rounded-full text-slate-600 font-black tracking-widest uppercase text-sm shadow-sm backdrop-blur-sm">МАРРА СЫЗЫГЫ 🏁</span>
+      </div>
+
+      <div class="relative flex-1 min-h-[500px] mt-4 mb-4" :style="'--total:' + totalQuestions">
+        
+        <!-- Ийри-буйру жолдун чекиттери (Суроолордун орду) -->
+        <template x-for="i in totalQuestions" :key="'q'+i">
+          <div class="absolute w-10 h-10 -ml-5 -mb-5 flex items-center justify-center transition-all z-0"
+               :style="getCheckpointStyle(i)">
+            <div class="bg-white/60 backdrop-blur-sm text-slate-400 font-black text-[18px] w-6 h-6 rounded-full flex items-center justify-center shadow-sm border border-slate-200">
+              <span x-text="i"></span>
+            </div>
+            <!-- Жолдун сызыгын тууроочу чекиттер (акыркы суроодон башкасына) -->
+            <div x-show="i < totalQuestions" class="absolute h-full border-l-2 border-dashed border-slate-300/50 -z-10" style="height: 200%; top: 50%;"></div>
+          </div>
+        </template>
+
+        <!-- Starting Line (Баштапкы чекит) -->
+        <div class="absolute bottom-0 w-full flex justify-center text-slate-300 font-bold text-xs pb-2 uppercase tracking-widest border-t-2 border-dashed border-slate-200">
+          Башталыш
+        </div>
+
+        <!-- Оюнчулардын Аватарлары -->
+        <template x-for="p in playerList" :key="p.id">
+          <div class="absolute transition-all duration-1000 ease-in-out flex flex-col items-center group cursor-pointer hover:z-50"
+               :style="avatarStyle(p)">
+            
+            <!-- Оюнчунун маалыматы (Hover болгондо чоңоёт) -->
+            <div class="bg-white/95 backdrop-blur-md border border-slate-200 px-3 py-1.5 rounded-xl shadow-xl mb-2 flex flex-col items-center transform transition-all scale-90 opacity-90 group-hover:scale-110 group-hover:opacity-100 z-10">
+              <span class="text-xs font-black text-slate-800 truncate max-w-[80px]" x-text="p.nickname"></span>
+              <span class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md mt-0.5" x-text="p.score + ' pts'"></span>
+            </div>
+            
+            <!-- Аватар -->
+            <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-[0_8px_15px_-3px_rgba(0,0,0,0.1)] border-4 transition-all duration-500 relative"
+                 :class="p.answered === totalQuestions ? 'border-success animate-bounce shadow-success/30' : (p.score > 0 ? 'border-primary' : 'border-slate-200')">
+              <span x-text="p.avatar && !p.avatar.startsWith('/') ? p.avatar : '🐶'" class="drop-shadow-sm"></span>
+              
+              <!-- От эффектиси (Эгер оюнчу алдыга жылып жатса) -->
+              <div x-show="p.score > 0 && p.answered < totalQuestions" class="absolute -bottom-5 text-xl animate-pulse opacity-0 group-hover:opacity-100 transition-opacity">🚀</div>
+            </div>
+
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Sidebar Leaderboard -->
+    <div class="w-80 bg-white/90 backdrop-blur-xl border border-white rounded-[2rem] shadow-lg flex flex-col overflow-hidden relative">
+      <div class="bg-slate-50/80 px-6 py-5 border-b border-slate-100">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+          <span>🏆</span> Топ Оюнчулар
+        </h3>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto p-4 space-y-2 relative" id="leaderboard-list">
+        <template x-for="(p, i) in sortedPlayers" :key="p.id">
+          <div class="flex items-center gap-3 p-3 rounded-2xl transition-all duration-500 border"
+               :class="i===0 ? 'bg-gradient-to-r from-warning/20 to-yellow-50 border-warning/30 shadow-sm transform hover:scale-[1.02]' : 
+                       i===1 ? 'bg-gradient-to-r from-slate-200/50 to-slate-50 border-slate-200 shadow-sm hover:scale-[1.02]' : 
+                       i===2 ? 'bg-gradient-to-r from-amber-600/10 to-orange-50 border-amber-600/20 shadow-sm hover:scale-[1.02]' : 
+                       'bg-white border-transparent hover:border-slate-100 hover:bg-slate-50'">
+            
+            <!-- Rank -->
+            <div class="w-8 flex justify-center shrink-0">
+              <span x-show="i===0" class="text-2xl drop-shadow-sm">🥇</span>
+              <span x-show="i===1" class="text-2xl drop-shadow-sm">🥈</span>
+              <span x-show="i===2" class="text-2xl drop-shadow-sm">🥉</span>
+              <span x-show="i>2" class="text-sm font-black text-slate-400" x-text="i+1"></span>
+            </div>
+            
+            <!-- Avatar -->
+            <div class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xl shrink-0 shadow-sm">
+              <span x-text="p.avatar && !p.avatar.startsWith('/') ? p.avatar : '🐶'"></span>
+            </div>
+            
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-slate-800 truncate" :class="i<3 ? 'text-base' : ''" x-text="p.nickname"></div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <div class="text-xs font-black text-primary" x-text="p.score + ' pts'"></div>
+                <div class="w-1 h-1 rounded-full bg-slate-300"></div>
+                <div class="text-[10px] font-bold text-slate-500"><span x-text="p.answered"></span>/<span x-text="totalQuestions"></span> суроо</div>
+              </div>
+            </div>
+
+          </div>
+        </template>
+        
+        <!-- Empty State -->
+        <div x-show="playerList.length===0" class="text-center text-slate-400 mt-10">
+          <div class="text-4xl mb-2 opacity-50">👀</div>
+          <p class="text-sm font-bold">Оюнчулар күтүлүүдө...</p>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+<script>
+function teacherMonitor(sessionId, totalQuestions) {
+  const initPlayers = {{with .Data}}{{jsonPlayers .Players .Progress .Scores}}{{end}};
+
+  return {
+    sessionId,
+    totalQuestions,
+    playerList: initPlayers,
+    ws: null,
+
+    get playerCount() { return this.playerList.length; },
+    get sortedPlayers() {
+      return [...this.playerList].sort((a,b) => b.score - a.score);
+    },
+
+    init() {
+      this.ws = createWS(`/ws/teacher/${sessionId}`, (msg) => {
+        if (msg.type === 'player_progress') {
+          const p = this.playerList.find(x => x.id === msg.payload.player_id);
+          if (p) {
+            p.answered = msg.payload.questions_answered;
+            p.score    = msg.payload.total_score;
+            this.triggerUpdateEffect(p.id);
+          }
+        }
+        if (msg.type === 'game_finished') {
+          setTimeout(() => { location.href = `/teacher/podium/${sessionId}`; }, 3000);
+        }
+      });
+    },
+
+    triggerUpdateEffect(id) {
+      // Керек болсо бул жерге DOM манипуляция кошуп, оюнчунун картасын "жарк" эттирсе болот.
+    },
+
+    // Бул функция суроолордун ордун ийри-буйру (жылан) формасында жайгаштырат
+    getCheckpointStyle(step) {
+      const pct = this.totalQuestions > 0 ? (step / this.totalQuestions) : 0;
+      const bottomPct = pct * 85; // Үстүнө 15% боштук калтыруу үчүн
+      
+      // Синус функциясы аркылуу X огун (оңго-солго) толкун сыяктуу өзгөртөбүз
+      const curves = this.totalQuestions > 10 ? 2.5 : 1.5; 
+      const baseX = 50 + Math.sin(pct * Math.PI * curves * 2) * 35; 
+
+      return `bottom: ${bottomPct}%; left: ${baseX}%;`;
+    },
+
+    avatarStyle(p) {
+      const pct = this.totalQuestions > 0 ? (p.answered / this.totalQuestions) : 0;
+      const bottomPct = pct * 85; 
+      
+      const curves = this.totalQuestions > 10 ? 2.5 : 1.5;
+      let baseX = 50 + Math.sin(pct * Math.PI * curves * 2) * 35;
+
+      // ОЮНЧУЛАРДЫ ЧАЧЫРАТУУ (Scatter effect)
+      const pIndex = this.playerList.indexOf(p);
+      const offsetX = (pIndex % 5 - 2) * 3; // -6% дан +6% га чейинки жылышуу
+      const offsetY = (pIndex % 3 - 1) * 2; // Өйдө-ылдый кичинекей жылышуу
+
+      const finalX = Math.max(5, Math.min(95, baseX + offsetX)); // Экрандан чыгып кетпеши үчүн чектейбиз
+      const finalBottom = Math.max(0, bottomPct + offsetY);
+
+      return `bottom: ${finalBottom}%; left: ${finalX}%; transform: translateX(-50%) translateY(50%); z-index: ${Math.floor(pct * 100) + (pIndex % 10)};`;
+    },
+  };
+}
+</script>
+
+<style>
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  .animate-blob {
+    animation: blob 10s infinite;
+  }
+  
+  /* Лидерлер тактасындагы орун которууларды жумшартуу */
+  #leaderboard-list > div {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+  }
+</style>
+</body>
+</html>
+{{end}}

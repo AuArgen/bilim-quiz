@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{appName}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: { DEFAULT: '#8B5CF6', hover: '#7C3AED' }, // Soft purple
+            accent:  { DEFAULT: '#F472B6', hover: '#EC4899' }, // Pink
+            success: '#34D399', // Pastel green
+            warning: '#FBBF24', // Light yellow
+            info:    '#60A5FA', // Soft blue
+            cream:   '#FDFBF7', // Cream background
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/30" x-data="{ lang: '{{.Lang}}' }">
+
+  <!-- Main Content Area -->
+  {{template "content" .}}
+
+  <!-- Language modal (shown smoothly when no preferred lang detected) -->
+  <div id="lang-modal"
+       class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500"
+       x-data="langModal()">
+    
+    <div id="lang-modal-content" class="bg-white/95 backdrop-blur-xl rounded-[2.5rem] p-8 w-[90%] max-w-sm text-center shadow-2xl shadow-slate-900/20 border border-white transform scale-95 transition-transform duration-500 relative overflow-hidden">
+      
+      <!-- Decorative background blur inside modal -->
+      <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/15 rounded-full blur-2xl"></div>
+      <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-accent/15 rounded-full blur-2xl"></div>
+      
+      <!-- Icon -->
+      <div class="relative z-10 w-20 h-20 bg-primary/10 rounded-[1.5rem] mx-auto flex items-center justify-center text-5xl mb-6 shadow-inner transform hover:rotate-12 hover:scale-105 transition-all duration-300">
+        🌍
+      </div>
+      
+      <!-- Text -->
+      <h2 class="relative z-10 text-2xl font-black mb-1 text-slate-800 tracking-tight">{{t .Lang "choose_language"}}</h2>
+      <p class="relative z-10 text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">Выберите язык / Choose Language</p>
+      
+      <!-- Language Buttons -->
+      <div class="relative z-10 flex flex-col gap-3">
+        <!-- Kyrgyz -->
+        <a href="/lang/ky" class="group flex items-center justify-center gap-3 w-full bg-slate-50 hover:bg-primary text-slate-700 hover:text-white border border-slate-200 hover:border-primary font-bold py-4 px-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-1">
+          <span class="text-2xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🇰🇬</span> Кыргызча
+        </a>
+        
+        <!-- Russian -->
+        <a href="/lang/ru" class="group flex items-center justify-center gap-3 w-full bg-slate-50 hover:bg-info text-slate-700 hover:text-white border border-slate-200 hover:border-info font-bold py-4 px-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-info/30 hover:-translate-y-1">
+          <span class="text-2xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🇷🇺</span> Русский
+        </a>
+        
+        <!-- English -->
+        <a href="/lang/en" class="group flex items-center justify-center gap-3 w-full bg-slate-50 hover:bg-accent text-slate-700 hover:text-white border border-slate-200 hover:border-accent font-bold py-4 px-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-1">
+          <span class="text-2xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🇬🇧</span> English
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // Show lang modal if no cookie is set, with smooth CSS transition
+    (function() {
+      if (!document.cookie.includes('lang=')) {
+        const acc = navigator.language || navigator.userLanguage || '';
+        const supported = ['ky','ru','en'];
+        const code = acc.split('-')[0].toLowerCase();
+        
+        if (!supported.includes(code)) {
+          // Кичинекей кечигүү менен класс алмаштырсак, анимация жумшак иштейт
+          setTimeout(() => {
+            const modal = document.getElementById('lang-modal');
+            const content = document.getElementById('lang-modal-content');
+            
+            if(modal && content) {
+              modal.classList.remove('opacity-0', 'pointer-events-none');
+              content.classList.remove('scale-95');
+              content.classList.add('scale-100');
+            }
+          }, 100);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

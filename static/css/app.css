@@ -1,0 +1,80 @@
+/* BilimQuiz custom styles (Gamified Learning UI) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #FDFBF7; /* Soft cream */
+}
+
+/* Base interactive elements */
+.btn-primary {
+  @apply bg-primary text-white font-bold px-6 py-3 rounded-2xl shadow-[0_4px_14px_0_rgba(139,92,246,0.39)]
+         hover:bg-primary-hover hover:shadow-[0_6px_20px_rgba(139,92,246,0.23)] hover:-translate-y-1 transition-all duration-300 active:scale-95;
+}
+.btn-secondary {
+  @apply bg-white text-slate-700 font-bold px-6 py-3 rounded-2xl border-2 border-slate-100 shadow-[0_4px_14px_0_rgba(0,0,0,0.05)]
+         hover:border-slate-200 hover:bg-slate-50 hover:-translate-y-1 transition-all duration-300 active:scale-95;
+}
+.btn-danger {
+  @apply bg-red-400 text-white font-bold px-4 py-2 rounded-2xl shadow-[0_4px_14px_0_rgba(248,113,113,0.39)]
+         hover:bg-red-500 hover:-translate-y-1 transition-all duration-300 active:scale-95;
+}
+.btn-icon {
+  @apply w-9 h-9 flex items-center justify-center rounded-xl shadow-sm text-white font-bold
+         hover:-translate-y-1 hover:shadow-md transition-all duration-300 active:scale-95;
+}
+
+/* Nav Card Buttons */
+.nav-btn {
+  @apply flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all duration-300 hover:-translate-y-0.5;
+}
+
+.btn-lang {
+  @apply block bg-white hover:bg-primary text-slate-700 hover:text-white font-bold
+         px-4 py-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow hover:-translate-y-1 transition-all duration-300;
+}
+
+/* Modern Cards */
+.card {
+  @apply bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)];
+}
+
+/* Soft Inputs */
+.input {
+  @apply w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-5 py-3.5
+         text-slate-800 font-medium placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-primary/10
+         focus:border-primary transition-all duration-300 shadow-inner;
+}
+.label {
+  @apply block text-sm font-bold text-slate-600 mb-2 uppercase tracking-wide;
+}
+.badge {
+  @apply inline-block px-3 py-1 rounded-xl text-xs font-bold tracking-wide;
+}
+
+/* Gamified checkboxes */
+.toggle-checkbox {
+  @apply appearance-none w-8 h-8 rounded-full border-2 border-slate-200 bg-slate-50 checked:bg-success checked:border-success checked:after:content-['✓'] checked:after:text-white checked:after:font-bold checked:after:absolute relative flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+  from { transform: translateY(10px); opacity: 0.7; }
+  to   { transform: translateY(0);    opacity: 1;   }
+}
+.avatar-move {
+  animation: floatUp 0.4s ease-out;
+}
+
+/* Podium */
+.podium-1 { @apply bg-[#FBBF24] text-amber-900 shadow-lg shadow-[#FBBF24]/40 rounded-t-[2rem]; }
+.podium-2 { @apply bg-slate-200 text-slate-800 shadow-lg shadow-slate-200/40 rounded-t-[2rem]; }
+.podium-3 { @apply bg-[#F472B6] text-white shadow-lg shadow-[#F472B6]/40 rounded-t-[2rem]; }

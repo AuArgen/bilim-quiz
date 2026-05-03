@@ -1,0 +1,424 @@
+{{define "game_builder.html"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{appName}} — {{t .Lang "edit_game"}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+</head>
+<body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/20" x-data="gameBuilder()">
+
+<div class="flex min-h-screen">
+
+  <!-- Left panel: question list -->
+  <aside class="w-72 bg-white border-r border-slate-100 flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-20 animate-fade-in-up">
+    <div class="p-6 border-b border-slate-100 flex items-center gap-4">
+      <a href="/dashboard" class="group flex items-center gap-3 decoration-transparent">
+        <div class="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-xl shadow-inner group-hover:scale-105 group-hover:bg-primary/20 transition-all duration-300">🦉</div>
+        <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          {{t .Lang "dashboard"}}
+        </span>
+      </a>
+    </div>
+    
+    <div class="p-4 flex-1 overflow-y-auto space-y-2">
+      <div class="flex items-center justify-between mb-4 px-1">
+        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">{{t .Lang "questions"}}</p>
+        <span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full font-bold">{{with .Data}}{{with .Questions}}{{len .}}{{else}}0{{end}}{{end}}</span>
+      </div>
+      
+      {{with .Data}}{{with .Questions}}
+      {{range $i, $q := .}}
+      <button @click="selectQuestion({{$i}})"
+              :class="selected==={{$i}} ? 'bg-primary text-white shadow-md shadow-primary/30 scale-[1.02]' : 'bg-white text-slate-600 border border-slate-100 hover:border-primary/30 hover:bg-slate-50 shadow-sm hover:shadow-md'"
+              class="w-full text-left text-sm px-4 py-3.5 rounded-xl truncate transition-all duration-300 font-semibold flex items-center gap-3 group">
+        <span class="w-6 h-6 flex items-center justify-center rounded-md text-xs shrink-0 transition-colors"
+              :class="selected==={{$i}} ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary'">
+          {{inc $i}}
+        </span>
+        <span class="truncate flex-1">{{$q.Content}}</span>
+      </button>
+      {{end}}
+      {{end}}{{end}}
+    </div>
+
+    <div class="p-5 border-t border-slate-100 bg-slate-50/50">
+      <button @click="addQuestion()"
+              class="w-full bg-success hover:bg-emerald-500 text-white font-bold text-sm py-3 px-4 rounded-xl shadow-sm shadow-success/30 hover:shadow-success/50 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5">
+        <span class="text-lg">➕</span> {{t .Lang "add_question"}}
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <main class="flex-1 flex flex-col overflow-hidden bg-slate-50/30">
+
+    <!-- Top bar: game info -->
+    {{with .Data}}{{with .Game}}
+    <div class="bg-white border-b border-slate-100 p-6 shadow-sm z-10 animate-fade-in-up" style="animation-delay: 0.1s">
+      <form method="POST"
+            action="{{if .ID}}/games/{{.ID}}/edit{{else}}/games/new{{end}}"
+            class="flex flex-wrap items-center gap-4 max-w-5xl mx-auto">
+        <div class="flex-1 min-w-[300px] relative">
+          <input type="text" name="title" value="{{.Title}}"
+                 class="w-full bg-transparent text-2xl font-black text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-0 border-none px-0 py-2 border-b-2 border-transparent focus:border-primary/30 transition-colors"
+                 placeholder="{{t $.Lang "game_title"}}" required/>
+        </div>
+        <div class="flex-1 min-w-[200px] relative">
+          <input type="text" name="description" value="{{.Description}}"
+                 class="w-full bg-slate-50 focus:bg-white text-sm text-slate-600 px-4 py-2.5 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                 placeholder="{{t $.Lang "game_desc"}}"/>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
+            💾 {{t $.Lang "save"}}
+          </button>
+          {{if .ID}}
+          <a href="/play/{{.ID}}" target="_blank" class="bg-info hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm shadow-info/30 transition-all flex items-center gap-2 hover:-translate-y-0.5">
+            ▶ {{t $.Lang "play_game"}}
+          </a>
+          {{end}}
+        </div>
+      </form>
+    </div>
+    {{end}}{{end}}
+
+    <!-- Question editor -->
+    <div class="flex-1 overflow-auto p-6 lg:p-10" x-show="showForm" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+      <div class="max-w-5xl mx-auto">
+        
+        {{with .Data}}{{with .Game}}{{if .ID}}
+        
+        <!-- AI generate bar -->
+        <div class="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/10 rounded-2xl p-2 mb-8 animate-fade-in-up relative overflow-hidden shadow-sm" style="animation-delay: 0.2s" x-data="{topic:'',loading:false}">
+          <div class="absolute -right-10 -top-10 w-32 h-32 bg-accent/20 rounded-full blur-3xl"></div>
+          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+          
+          <div class="relative flex items-center gap-3">
+            <div class="hidden sm:flex w-12 h-12 bg-white/80 backdrop-blur-sm rounded-xl items-center justify-center text-2xl shadow-sm z-10 border border-white">✨</div>
+            <input type="text" x-model="topic" class="flex-1 bg-white/90 backdrop-blur-sm border border-white/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 text-slate-700 px-4 py-3 rounded-xl z-10 transition-all font-medium text-sm"
+                   placeholder="{{t $.Lang "ai_topic"}} (мисалы: Байыркы Рим тарыхы)"/>
+            <button @click="generateAI(topic, {{.ID}})"
+                    :disabled="loading || topic.length<3"
+                    class="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md shadow-primary/20 transition-all z-10 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed group">
+              <span x-show="loading" class="animate-spin">⏳</span>
+              <span x-show="!loading" class="text-lg">🤖</span> 
+              <span>{{t $.Lang "ai_generate"}}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Question form -->
+        <form :action="editingId ? '/questions/'+editingId+'/update' : '/games/{{.ID}}/questions'"
+              @submit="validateQuestion($event)"
+              method="POST" class="space-y-6 animate-fade-in-up" style="animation-delay: 0.3s">
+          <input type="hidden" name="game_id" value="{{.ID}}"/>
+
+          <!-- Question Content -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <label class="block text-sm font-bold text-primary mb-3">{{t $.Lang "question_text"}}</label>
+            <textarea name="content" rows="3" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl p-4 text-slate-800 font-medium resize-none transition-all" required
+                      x-model="form.content" placeholder="Сурооңузду бул жерге жазыңыз..."></textarea>
+          </div>
+
+          <!-- Media & Settings Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Media -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+              <div>
+                <label class="block text-sm font-bold text-accent mb-2 flex items-center gap-2"><span>🖼️</span> {{t $.Lang "image_url"}}</label>
+                <input type="url" name="image_url" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-accent focus:ring-2 focus:ring-accent/20 rounded-xl px-4 py-2.5 text-sm transition-all" x-model="form.image_url" placeholder="https://..."/>
+                <div x-show="form.image_url" x-transition class="mt-3 rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                  <img :src="form.image_url" class="max-h-48 w-full object-contain mx-auto" @error="$event.target.style.display='none'" @load="$event.target.style.display='block'"/>
+                </div>
+              </div>
+              
+              <div class="pt-4 border-t border-slate-100">
+                <label class="block text-sm font-bold text-red-500 mb-2 flex items-center gap-2"><span>📺</span> {{t $.Lang "youtube_url"}}</label>
+                <input type="url" name="youtube_url" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-400/20 rounded-xl px-4 py-2.5 text-sm transition-all" x-model="form.youtube_url" placeholder="https://youtube.com/..."/>
+                
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">{{t $.Lang "start_time"}} (сек)</label>
+                    <input type="number" name="youtube_start" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-3 py-2 text-sm transition-all" x-model="form.youtube_start" min="0"/>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">{{t $.Lang "end_time"}} (сек)</label>
+                    <input type="number" name="youtube_end" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-3 py-2 text-sm transition-all" x-model="form.youtube_end" min="0"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+              <h3 class="text-sm font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">⚙️ Жөндөөлөр</h3>
+              
+              <div class="space-y-5">
+                <div>
+                  <label class="block text-sm font-bold text-warning mb-2">{{t $.Lang "time_limit"}} (секунд)</label>
+                  <input type="number" name="time_limit" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-warning focus:ring-2 focus:ring-warning/20 rounded-xl px-4 py-2.5 text-sm transition-all" x-model="form.time_limit" min="5" max="120"/>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-bold text-info mb-2">{{t $.Lang "score_type"}}</label>
+                  <select name="score_type" class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-info focus:ring-2 focus:ring-info/20 rounded-xl px-4 py-2.5 text-sm transition-all cursor-pointer" x-model="form.score_type">
+                    <option value="dynamic">{{t $.Lang "score_dynamic"}} (ылдамдыкка жараша)</option>
+                    <option value="static">{{t $.Lang "score_static"}} (туруктуу)</option>
+                  </select>
+                </div>
+
+                <div x-show="form.score_type==='static'" x-transition class="pt-2">
+                  <label class="block text-sm font-bold text-slate-600 mb-2">Упайдын саны</label>
+                  <input type="number" name="static_score" class="w-32 bg-slate-50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-4 py-2.5 text-sm transition-all" x-model="form.static_score" min="1"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Answers -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <label class="block text-sm font-bold text-success flex items-center gap-2"><span>✅</span> Жооптордун варианттары</label>
+              <button type="button" @click="addAnswer()"
+                      x-show="form.answers.length < 5"
+                      class="bg-success/10 hover:bg-success text-success hover:text-white py-1.5 px-4 rounded-lg text-xs font-bold transition-colors duration-300">
+                + {{t $.Lang "add_answer"}}
+              </button>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <template x-for="(ans, i) in form.answers" :key="i">
+                <div class="relative flex items-stretch rounded-xl border transition-all duration-300 group overflow-hidden"
+                     :class="ans.is_correct ? 'border-success bg-success/5 shadow-sm shadow-success/10' : 'border-slate-200 bg-slate-50 hover:border-slate-300'">
+                  
+                  <!-- Color Indicator -->
+                  <div class="w-2 shrink-0 transition-colors" :class="ans.is_correct ? 'bg-success' : 'bg-slate-200 group-hover:bg-slate-300'"></div>
+                  
+                  <div class="flex flex-1 items-center gap-3 p-3 pl-4">
+                    <!-- Custom Checkbox -->
+                    <label class="relative flex items-center cursor-pointer">
+                      <input type="checkbox" :name="'answer_correct[]'" :value="i" x-model="ans.is_correct" class="peer sr-only"/>
+                      <div class="w-6 h-6 rounded-md border-2 transition-all flex items-center justify-center bg-white"
+                           :class="ans.is_correct ? 'border-success bg-success' : 'border-slate-300 peer-hover:border-success/50'">
+                        <svg x-show="ans.is_correct" class="w-4 h-4 text-white font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                    </label>
+
+                    <input type="text" :name="'answer_text[]'" x-model="ans.text" required
+                           class="flex-1 bg-transparent border-none focus:ring-0 px-1 text-base font-bold text-slate-700 placeholder:text-slate-400 placeholder:font-normal" :placeholder="'Вариант '+(i+1)"/>
+                    
+                    <button type="button" @click="removeAnswer(i)"
+                            x-show="form.answers.length > 2"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-100 hover:text-red-500 font-bold transition-colors opacity-0 group-hover:opacity-100">✕</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Bottom Actions -->
+          <div class="flex flex-wrap gap-4 pt-4 pb-12 items-center">
+            <button type="submit"
+                    :disabled="!hasCorrectAnswer()"
+                    class="bg-success hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl shadow-md shadow-success/30 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+              💾 {{t $.Lang "save"}}
+            </button>
+            <button type="button" @click="resetForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-6 rounded-xl transition-colors">
+              {{t $.Lang "cancel"}}
+            </button>
+            
+            <template x-if="editingId">
+              <div class="ml-auto">
+                <button type="button" @click="if(confirm('{{t $.Lang "confirm_delete"}}')) document.getElementById('deleteForm').submit()" 
+                        class="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white font-bold py-3 px-6 rounded-xl transition-colors border border-red-100 hover:border-red-500 flex items-center gap-2">
+                  🗑 {{t $.Lang "delete"}}
+                </button>
+              </div>
+            </template>
+          </div>
+        </form>
+
+        <!-- Hidden delete form -->
+        <template x-if="editingId">
+          <form id="deleteForm" :action="'/questions/'+editingId+'/delete'" method="POST" class="hidden">
+            <input type="hidden" name="game_id" value="{{.ID}}"/>
+          </form>
+        </template>
+
+        {{end}}{{end}}{{end}}
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="flex-1 flex flex-col items-center justify-center text-slate-400 p-10" x-show="!showForm" x-transition>
+      <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-4 opacity-50">✍️</div>
+      <h3 class="text-lg font-bold text-slate-500 mb-2">Суроо тандаңыз же жаңысын кошуңуз</h3>
+      <p class="text-sm font-medium">Сол жактагы тизмеден суроону басыңыз же ➕ баскычын колдонуңуз</p>
+    </div>
+  </main>
+</div>
+
+<script>
+const _i18n = {
+  ai_toast_success: {{t .Lang "ai_toast_success" | jsStr}},
+  ai_error_no_key:  {{t .Lang "ai_error_no_key"  | jsStr}},
+  ai_error_quota:   {{t .Lang "ai_error_quota"   | jsStr}},
+  ai_error_network: {{t .Lang "ai_error_network" | jsStr}},
+  ai_error_generic: {{t .Lang "ai_error_generic" | jsStr}},
+};
+
+function gameBuilder() {
+  const questions = {{with .Data}}{{with .Questions}}{{jsonQuestions .}}{{else}}[]{{end}}{{else}}[]{{end}};
+
+  return {
+    selected: null,
+    editingId: null,
+    showForm: false,
+    form: defaultForm(),
+
+    init() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('add') === '1') {
+        this.addQuestion();
+      }
+    },
+
+    selectQuestion(i) {
+      this.selected = i;
+      const q = questions[i];
+      this.editingId = q.id;
+      this.form = {
+        content: q.content,
+        image_url: q.image_url || '',
+        youtube_url: q.youtube_url || '',
+        youtube_start: q.youtube_start || 0,
+        youtube_end: q.youtube_end || 0,
+        time_limit: q.time_limit || 30,
+        score_type: q.score_type || 'dynamic',
+        static_score: q.static_score || 1,
+        answers: q.answers && q.answers.length ? q.answers : defaultAnswers(),
+      };
+      this.showForm = true;
+    },
+
+    addQuestion() {
+      this.selected = null;
+      this.editingId = null;
+      this.form = defaultForm();
+      this.showForm = true;
+    },
+
+    addAnswer() {
+      if (this.form.answers.length < 5) {
+        this.form.answers.push({text: '', is_correct: false});
+      }
+    },
+
+    removeAnswer(i) {
+      this.form.answers.splice(i, 1);
+    },
+
+    hasCorrectAnswer() {
+      return this.form.answers.some(ans => ans.is_correct && ans.text.trim().length > 0);
+    },
+
+    validateQuestion(event) {
+      if (!this.hasCorrectAnswer()) {
+        event.preventDefault();
+        showToast('Mark the correct answer first.', 'error');
+      }
+    },
+
+    resetForm() {
+      this.selected = null;
+      this.editingId = null;
+      this.showForm = false;
+    },
+
+    async generateAI(topic, gameId) {
+      if (!topic || topic.length < 3) return;
+      this.loading = true;
+      try {
+        const res = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({topic, game_id: gameId}),
+        });
+        if (res.ok) {
+          showToast(_i18n.ai_toast_success, 'success');
+          setTimeout(() => location.reload(), 900);
+        } else {
+          let msg = _i18n.ai_error_generic;
+          try {
+            const data = await res.json();
+            if (data.error === 'no_key') {
+              msg = _i18n.ai_error_no_key;
+            } else if (data.message && data.message.includes('429')) {
+              msg = _i18n.ai_error_quota;
+            } else if (data.message) {
+              msg = data.message;
+            }
+          } catch(_) {}
+          showToast(msg, 'error');
+        }
+      } catch(e) {
+        showToast(_i18n.ai_error_network + ': ' + e.message, 'error');
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+}
+
+function showToast(message, type = 'success') {
+  const existing = document.getElementById('ai-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'ai-toast';
+  toast.style.cssText = `
+    position:fixed; bottom:32px; left:50%; transform:translateX(-50%);
+    max-width:480px; width:90%; padding:16px 24px; border-radius:20px;
+    font-size:14px; font-weight:700; z-index:9999;
+    box-shadow:0 10px 40px rgba(0,0,0,0.2);
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background:${type==='success'?'#34D399':'#EF4444'};
+    color:white; text-align:center; line-height:1.5;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateX(-50%) translateY(20px)'; toast.style.transition='all 0.4s ease'; setTimeout(()=>toast.remove(),400); }, type==='error'?6000:3000);
+}
+
+function defaultForm() {
+  return {
+    content: '',
+    image_url: '',
+    youtube_url: '',
+    youtube_start: 0,
+    youtube_end: 0,
+    time_limit: 30,
+    score_type: 'dynamic',
+    static_score: 1,
+    answers: defaultAnswers(),
+  };
+}
+
+function defaultAnswers() {
+  return [{text:'',is_correct:false},{text:'',is_correct:false}];
+}
+</script>
+<style>
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+</style>
+</body>
+</html>
+{{end}}

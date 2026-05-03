@@ -1,0 +1,241 @@
+{{define "lobby_student.html"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{appName}} — {{t .Lang "join_game"}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script src="/static/js/app.js"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+</head>
+<body class="bg-cream text-slate-800 min-h-screen flex flex-col font-sans selection:bg-primary/20 relative overflow-x-hidden"
+      x-data="lobbyStudent('{{with .Data}}{{.Pin}}{{end}}', '{{.Lang}}')">
+
+  <!-- Decorative Background Blobs -->
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+    <div class="absolute top-10 -left-20 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+    <div class="absolute top-40 right-0 w-72 h-72 bg-accent/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style="animation-delay: 2s"></div>
+    <div class="absolute -bottom-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-info/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style="animation-delay: 4s"></div>
+  </div>
+
+  <!-- Step 1: Enter name & avatar -->
+  <div x-show="step===1" x-transition.opacity.duration.500ms class="flex-1 flex flex-col items-center justify-center px-4 py-10 z-10">
+    <div class="w-full max-w-md">
+      
+      <!-- Header -->
+      <div class="text-center mb-8 animate-fade-in-up">
+        <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-5xl shadow-sm border border-slate-100 mb-4 animate-bounce" style="animation-duration: 2s;">👋</div>
+        <h2 class="text-3xl font-black text-slate-800 tracking-tight">{{t .Lang "enter_name"}}</h2>
+        <div class="inline-flex items-center gap-2 mt-3 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">PIN</span>
+          <span class="font-mono font-black text-primary tracking-widest">{{with .Data}}{{.Pin}}{{end}}</span>
+        </div>
+      </div>
+      
+      <!-- Main Card -->
+      <div class="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white p-6 sm:p-8 space-y-6 animate-fade-in-up" style="animation-delay: 0.1s">
+        
+        <!-- Nickname Input -->
+        <div>
+          <label class="block text-sm font-bold text-slate-600 mb-2 uppercase tracking-wide ml-1">{{t .Lang "enter_name"}}</label>
+          <input type="text" x-model="nickname" 
+                 class="w-full bg-slate-50 focus:bg-white border-2 border-slate-200 focus:border-primary rounded-2xl py-4 px-4 text-xl text-center font-black transition-all focus:ring-4 focus:ring-primary/20 placeholder:text-slate-300 text-slate-800"
+                 placeholder="Сиздин атыңыз..."
+                 maxlength="20" autofocus autocomplete="off"/>
+        </div>
+
+        <!-- Avatar section -->
+        <div class="pt-2">
+          <label class="block text-sm font-bold text-slate-600 mb-3 uppercase tracking-wide ml-1 flex items-center justify-between">
+            <span>{{t .Lang "choose_avatar"}}</span>
+          </label>
+          
+          <!-- Emoji grid -->
+          <div class="grid grid-cols-5 gap-2 mb-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+            <template x-for="emoji in emojis" :key="emoji">
+              <button type="button"
+                      @click="selectEmoji(emoji)"
+                      :class="avatar===emoji && !avatarUrl ? 'ring-4 ring-primary bg-primary/10 scale-110 shadow-md z-10' : 'bg-white hover:bg-slate-100 border border-slate-200 hover:border-primary/50 shadow-sm hover:scale-105'"
+                      class="aspect-square rounded-xl text-3xl flex items-center justify-center transition-all duration-200 relative">
+                <span x-text="emoji"></span>
+                <div x-show="avatar===emoji && !avatarUrl" class="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-white"></div>
+              </button>
+            </template>
+          </div>
+
+          <!-- Photo upload -->
+          <div class="flex items-center justify-center">
+            <label class="cursor-pointer group relative overflow-hidden inline-flex items-center gap-2 bg-white border-2 border-dashed border-slate-300 hover:border-primary/50 px-5 py-2.5 rounded-xl transition-colors">
+              <span class="text-xl group-hover:scale-110 transition-transform duration-300">📷</span>
+              <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{t .Lang "upload_photo"}}</span>
+              <input type="file" accept="image/*" class="hidden" @change="uploadPhoto($event)"/>
+            </label>
+          </div>
+          
+          <!-- Uploaded Preview -->
+          <div x-show="avatarPreview" x-transition class="mt-4 flex justify-center">
+            <div class="relative inline-block">
+              <img :src="avatarPreview" class="w-20 h-20 rounded-2xl mx-auto object-cover border-4 border-white shadow-lg ring-2 ring-primary"/>
+              <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-success rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">✓</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-2">
+          <button @click="joinLobby()"
+                  :disabled="nickname.trim().length<2 || joining"
+                  class="w-full bg-primary hover:bg-primary-hover disabled:bg-slate-300 text-white text-xl font-black py-4 rounded-2xl shadow-lg shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 group hover:-translate-y-1 disabled:transform-none">
+            <span x-show="joining" class="animate-spin inline-block mr-2">⏳</span>
+            <span x-show="!joining">{{t .Lang "join"}}</span>
+            <span x-show="!joining" class="text-2xl transition-transform group-hover:translate-x-1.5">→</span>
+          </button>
+          
+          <div x-show="error" x-transition class="mt-3 bg-red-50 text-accent text-sm font-bold py-2 px-4 rounded-xl border border-red-100 text-center flex items-center justify-center gap-2">
+            <span>⚠️</span> <span x-text="error"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Waiting room -->
+  <div x-show="step===2" style="display: none;" x-transition.opacity.duration.500ms class="flex-1 flex flex-col items-center justify-center px-4 text-center z-10">
+    
+    <div class="bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-2xl shadow-primary/10 border border-white p-10 md:p-14 max-w-lg w-full flex flex-col items-center relative overflow-hidden">
+      
+      <!-- Inner radial gradient -->
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-50 to-transparent opacity-50"></div>
+      
+      <!-- Player Avatar & Name -->
+      <div class="relative z-10">
+        <template x-if="!avatarUrl">
+          <div class="w-32 h-32 bg-gradient-to-br from-primary/20 to-accent/20 rounded-[2rem] flex items-center justify-center text-7xl shadow-inner border-4 border-white mb-6 mx-auto transform hover:rotate-6 transition-transform duration-300" x-text="avatar"></div>
+        </template>
+        <template x-if="avatarUrl">
+          <img :src="avatarUrl" class="w-32 h-32 rounded-[2rem] object-cover border-4 border-white shadow-lg mx-auto mb-6 transform hover:rotate-6 transition-transform duration-300"/>
+        </template>
+        
+        <h2 class="text-4xl font-black text-slate-800 tracking-tight mb-2" x-text="nickname"></h2>
+        <div class="inline-block bg-success/10 text-success text-xs font-bold px-3 py-1 rounded-full border border-success/20 mb-8">
+          Оюнга кошулдуңуз!
+        </div>
+      </div>
+
+      <!-- Loading / Waiting Animation -->
+      <div class="relative z-10 w-full bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col items-center">
+        <p class="text-slate-500 font-bold uppercase tracking-wider text-sm mb-4">{{t .Lang "waiting_players"}}</p>
+        
+        <!-- Bouncing dots -->
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-3.5 h-3.5 rounded-full bg-primary animate-bounce shadow-sm"></div>
+          <div class="w-3.5 h-3.5 rounded-full bg-accent animate-bounce shadow-sm" style="animation-delay:.15s"></div>
+          <div class="w-3.5 h-3.5 rounded-full bg-info animate-bounce shadow-sm" style="animation-delay:.3s"></div>
+        </div>
+
+        <div class="w-full h-px bg-slate-200 mb-4"></div>
+
+        <div class="flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
+          <span class="text-xl">👥</span>
+          {{t .Lang "players_joined"}}: <span class="text-xl font-black text-primary bg-primary/10 px-3 py-0.5 rounded-lg" x-text="playerCount"></span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+<script>
+const ANIMAL_EMOJIS = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
+                       '🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦉'];
+
+function lobbyStudent(pin, lang) {
+  return {
+    pin,
+    lang,
+    step: 1,
+    nickname: '',
+    avatar: '🐶',
+    avatarPreview: '',
+    avatarUrl: '',
+    emojis: ANIMAL_EMOJIS,
+    joining: false,
+    error: '',
+    playerCount: 0,
+    ws: null,
+    playerId: null,
+
+    selectEmoji(emoji) {
+      this.avatar = emoji;
+      this.avatarPreview = '';
+      this.avatarUrl = '';
+    },
+
+    uploadPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      compressAndUpload(file, (url) => {
+        if (url) {
+          this.avatarUrl = url;
+          this.avatarPreview = url;
+          this.avatar = url;
+        }
+      });
+    },
+
+    async joinLobby() {
+      if (this.nickname.trim().length < 2) return;
+      this.joining = true;
+      this.error = '';
+      try {
+        const avatarVal = this.avatarUrl || this.avatar;
+        const res = await fetch('/lobby/' + this.pin + '/join', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: 'nickname=' + encodeURIComponent(this.nickname.trim())
+               + '&avatar=' + encodeURIComponent(avatarVal),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          this.playerId = data.player_id;
+          this.step = 2;
+          this.connectWS();
+        } else {
+          this.error = await res.text();
+        }
+      } catch {
+        this.error = 'Connection error';
+      } finally {
+        this.joining = false;
+      }
+    },
+
+    connectWS() {
+      this.ws = createWS('/ws/player/' + this.pin + '/' + this.playerId, (msg) => {
+        if (msg.type === 'lobby_update') {
+          this.playerCount = msg.player_count;
+        }
+        if (msg.type === 'game_start') {
+          location.href = '/play/' + this.pin + '/' + this.playerId;
+        }
+      });
+    },
+  };
+}
+</script>
+<style>
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+</style>
+</body>
+</html>
+{{end}}

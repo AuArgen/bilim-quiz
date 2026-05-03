@@ -1,0 +1,279 @@
+{{define "play_student.html"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>{{appName}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script src="/static/js/app.js"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+</head>
+<body class="bg-cream text-slate-800 min-h-screen flex flex-col font-sans selection:bg-primary/20 overflow-hidden relative"
+      x-data="playStudent(
+        '{{with .Data}}{{.Pin}}{{end}}',
+        {{with .Data}}{{.PlayerID}}{{end}},
+        '{{.Lang}}'
+      )">
+
+  <!-- Background decorative elements -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style="animation-duration: 4s;"></div>
+    <div class="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-accent/10 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style="animation-duration: 5s;"></div>
+  </div>
+
+  <!-- STATE: Waiting for question -->
+  <div x-show="state==='waiting'" x-transition.opacity.duration.500ms class="flex-1 flex flex-col items-center justify-center px-4 text-center z-10">
+    <div class="w-32 h-32 bg-white rounded-[2rem] shadow-xl border border-white flex items-center justify-center text-6xl mb-6 animate-bounce" style="animation-duration: 2s;">🎮</div>
+    <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-2">Даярданыңыз...</h2>
+    <p class="text-slate-500 font-medium px-4 py-2 bg-white/60 backdrop-blur-sm rounded-xl">{{t .Lang "waiting_players"}}</p>
+    
+    <div class="flex gap-2 mt-8">
+      <div class="w-3 h-3 rounded-full bg-primary animate-pulse"></div>
+      <div class="w-3 h-3 rounded-full bg-accent animate-pulse" style="animation-delay: 0.2s"></div>
+      <div class="w-3 h-3 rounded-full bg-info animate-pulse" style="animation-delay: 0.4s"></div>
+    </div>
+  </div>
+
+  <!-- STATE: Question screen -->
+  <div x-show="state==='question'" x-transition.opacity.duration.300ms class="flex-1 flex flex-col z-10 max-w-2xl mx-auto w-full h-screen">
+
+    <!-- Top bar: timer + progress -->
+    <div class="bg-white/90 backdrop-blur-xl px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-2 border-b border-slate-100 shadow-sm shrink-0 rounded-b-[2rem]">
+      <div class="flex items-center justify-between">
+        <div class="text-xs sm:text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
+          Суроо <span x-text="qIndex+1" class="text-slate-800"></span>/<span x-text="qTotal"></span>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <div class="text-2xl sm:text-3xl font-black tabular-nums transition-colors duration-300 w-12 text-right"
+               :class="timeLeft<=5?'text-accent animate-pulse scale-110':'text-slate-800'"
+               x-text="timeLeft"></div>
+          <span class="text-xs font-bold text-slate-400 uppercase">сек</span>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-100 rounded-full h-2.5 sm:h-3 overflow-hidden shadow-inner">
+        <div class="h-full rounded-full transition-all duration-1000 ease-linear relative overflow-hidden"
+             :class="timeLeft<=5 ? 'bg-accent shadow-accent/50' : (timeLeft<=10 ? 'bg-warning shadow-warning/50' : 'bg-primary shadow-primary/50')"
+             :style="'width:'+(timeLeft/timeTotal*100)+'%'">
+          <div class="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question Content Area -->
+    <div class="flex-1 flex flex-col px-4 py-6 sm:p-8 overflow-y-auto overflow-x-hidden">
+
+      <div class="flex-1 flex flex-col items-center justify-center w-full">
+        <!-- Image -->
+        <template x-if="question.image_url">
+          <div class="w-full mb-6 relative group">
+            <div class="absolute inset-0 bg-slate-200 rounded-2xl animate-pulse"></div>
+            <img :src="question.image_url" class="max-h-56 sm:max-h-72 w-full object-cover rounded-2xl shadow-lg border-4 border-white relative z-10 transition-transform duration-300" @load="$event.target.previousElementSibling.remove()"/>
+          </div>
+        </template>
+
+        <!-- YouTube embed -->
+        <template x-if="question.youtube_url">
+          <div class="w-full mb-6 aspect-video rounded-2xl shadow-lg border-4 border-white overflow-hidden bg-slate-900">
+            <iframe :src="youtubeEmbedUrl()" class="w-full h-full" allow="autoplay" allowfullscreen></iframe>
+          </div>
+        </template>
+
+        <!-- Question text -->
+        <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-100 w-full mb-6 relative">
+          <div class="absolute -top-4 -left-2 text-4xl opacity-20">💬</div>
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-black text-slate-800 text-center leading-snug break-words" x-text="question.content"></h2>
+        </div>
+      </div>
+
+      <!-- Score feedback (Overlay) -->
+      <div x-show="answered" x-transition.scale.duration.300ms class="w-full bg-white/95 backdrop-blur-md rounded-[2rem] p-6 text-center shadow-2xl border border-slate-100 mb-6 flex flex-col items-center justify-center">
+        <template x-if="earnedPoints > 0">
+          <div class="flex flex-col items-center animate-bounce-short">
+            <div class="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center text-4xl mb-2">✨</div>
+            <div class="text-5xl font-black text-success drop-shadow-sm">+<span x-text="earnedPoints"></span></div>
+            <div class="text-xs font-bold text-success uppercase tracking-widest mt-1">Упай кошулду</div>
+          </div>
+        </template>
+        <template x-if="earnedPoints === 0 && answered">
+          <div class="flex flex-col items-center">
+            <div class="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center text-4xl mb-2">❌</div>
+            <div class="text-xl font-bold text-slate-600 mt-2">Ката же кеч!</div>
+          </div>
+        </template>
+        
+        <div class="mt-4 pt-4 border-t border-slate-100 w-full flex items-center justify-center gap-2">
+          <span class="text-sm font-bold text-slate-500 uppercase">{{t .Lang "your_score"}}:</span>
+          <span class="text-2xl font-black text-primary bg-primary/10 px-3 py-1 rounded-xl" x-text="totalScore"></span>
+        </div>
+      </div>
+
+      <!-- Answer Buttons Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full shrink-0 pb-4">
+        <!-- Option Colors Array: We can dynamically assign colors based on index -->
+        <template x-for="(ans, i) in question.answers" :key="i">
+          <button
+            @click="submitAnswer(ans.text)"
+            :disabled="answered"
+            :class="{
+              /* States when answered */
+              'opacity-40 scale-95': answered && selectedAnswer !== ans.text && !ans.is_correct,
+              'bg-success border-success text-white ring-4 ring-success/30 shadow-lg shadow-success/30 scale-[1.02] z-10': answered && ans.is_correct,
+              'bg-accent border-accent text-white ring-4 ring-accent/30': answered && !ans.is_correct && selectedAnswer === ans.text,
+              
+              /* Default states */
+              'bg-white text-slate-700 hover:bg-slate-50 hover:border-primary/50 hover:shadow-md active:scale-95': !answered,
+              
+              /* Custom border colors for options */
+              'border-l-primary': !answered && i===0,
+              'border-l-accent': !answered && i===1,
+              'border-l-warning': !answered && i===2,
+              'border-l-success': !answered && i===3,
+            }"
+            class="relative w-full p-5 sm:p-6 rounded-[1.5rem] border-2 border-slate-200 font-bold text-left text-lg sm:text-xl transition-all duration-300 flex items-center overflow-hidden group">
+            
+            <!-- Default color indicator line -->
+            <div x-show="!answered" class="absolute left-0 top-0 bottom-0 w-2 transition-colors"
+                 :class="{'bg-primary': i===0, 'bg-accent': i===1, 'bg-warning': i===2, 'bg-success': i===3}"></div>
+                 
+            <span class="relative z-10 break-words w-full pl-2" x-text="ans.text"></span>
+            
+            <!-- Result Icons -->
+            <div x-show="answered && ans.is_correct" class="absolute right-4 text-3xl opacity-90 animate-bounce">✓</div>
+            <div x-show="answered && !ans.is_correct && selectedAnswer === ans.text" class="absolute right-4 text-2xl opacity-90">✕</div>
+          </button>
+        </template>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STATE: Finished -->
+  <div x-show="state==='finished'" x-transition.opacity.duration.800ms class="flex-1 flex flex-col items-center justify-center px-4 text-center z-10 bg-white/80 backdrop-blur-xl">
+    <div class="w-32 h-32 bg-gradient-to-br from-warning to-yellow-500 rounded-full flex items-center justify-center text-7xl shadow-xl shadow-warning/30 border-4 border-white mb-6 animate-bounce" style="animation-duration: 3s;">🏆</div>
+    <h2 class="text-4xl font-black text-slate-800 tracking-tight mb-2">{{t .Lang "final_results"}}</h2>
+    
+    <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 w-full max-w-sm mt-4 mb-8 relative">
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-bold uppercase tracking-widest px-4 py-1 rounded-full">{{t .Lang "your_score"}}</div>
+      <div class="text-6xl font-black text-primary drop-shadow-sm mt-2" x-text="totalScore"></div>
+      <div class="text-sm font-bold text-slate-400 mt-2">Упай топтодуңуз!</div>
+    </div>
+    
+    <a href="/" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-2 border border-slate-200">
+      <span class="text-xl">🏠</span> Башкы бетке кайтуу
+    </a>
+  </div>
+
+<script>
+function playStudent(pin, playerId, lang) {
+  return {
+    pin, playerId, lang,
+    ws: null,
+    state: 'waiting',
+    question: {},
+    qIndex: 0,
+    qTotal: 0,
+    timeLeft: 30,
+    timeTotal: 30,
+    timer: null,
+    answered: false,
+    selectedAnswer: '',
+    earnedPoints: 0,
+    totalScore: 0,
+    startMs: 0,
+
+    init() {
+      this.ws = createWS(`/ws/player/${pin}/${playerId}`, (msg) => this.handleMsg(msg));
+    },
+
+    handleMsg(msg) {
+      if (msg.type === 'question') {
+        this.state = 'question';
+        this.question = msg.question;
+        this.qIndex = msg.index;
+        this.qTotal = msg.total;
+        this.timeLeft = msg.question.time_limit || 30;
+        this.timeTotal = this.timeLeft;
+        this.answered = false;
+        this.selectedAnswer = '';
+        this.earnedPoints = 0;
+        this.startMs = Date.now();
+        this.startTimer();
+      }
+      if (msg.type === 'answer_result') {
+        this.earnedPoints = msg.earned_points;
+        this.totalScore = msg.total_score;
+        // reveal correct answers
+        if (this.question.answers) {
+          this.question.answers = msg.answers;
+        }
+      }
+      if (msg.type === 'game_over') {
+        this.state = 'finished';
+        this.totalScore = msg.final_score;
+        clearInterval(this.timer);
+      }
+    },
+
+    startTimer() {
+      clearInterval(this.timer);
+      this.timer = setInterval(() => {
+        this.timeLeft--;
+        if (this.timeLeft <= 0) {
+          clearInterval(this.timer);
+          if (!this.answered) this.submitAnswer('');
+        }
+      }, 1000);
+    },
+
+    submitAnswer(text) {
+      if (this.answered) return;
+      this.answered = true;
+      this.selectedAnswer = text;
+      clearInterval(this.timer);
+      const timeTakenMs = Date.now() - this.startMs;
+      this.ws.send(JSON.stringify({
+        type: 'answer',
+        answer: text,
+        time_taken_ms: timeTakenMs,
+        question_id: this.question.snapshot_id,
+      }));
+    },
+
+    youtubeEmbedUrl() {
+      if (!this.question.youtube_url) return '';
+      const vid = extractYouTubeId(this.question.youtube_url);
+      if (!vid) return '';
+      let url = `https://www.youtube.com/embed/${vid}?autoplay=1`;
+      if (this.question.youtube_start) url += `&start=${this.question.youtube_start}`;
+      if (this.question.youtube_end)   url += `&end=${this.question.youtube_end}`;
+      return url;
+    },
+  };
+}
+
+function extractYouTubeId(url) {
+  const m = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+</script>
+<style>
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+  @keyframes bounce-short {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10%); }
+  }
+  .animate-bounce-short {
+    animation: bounce-short 0.5s ease-in-out;
+  }
+</style>
+</body>
+</html>
+{{end}}
