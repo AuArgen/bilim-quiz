@@ -11,7 +11,8 @@
   <script src="/static/js/app.js"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
 </head>
-<body class="bg-cream text-slate-800 min-h-screen flex flex-col font-sans selection:bg-primary/20 overflow-hidden relative"
+<body class="bg-cream text-slate-800 flex flex-col font-sans selection:bg-primary/20 relative"
+      style="height: 100dvh; overflow: hidden;"
       x-data="playStudent(
         '{{with .Data}}{{.Pin}}{{end}}',
         {{with .Data}}{{.PlayerID}}{{end}},
@@ -38,7 +39,8 @@
   </div>
 
   <!-- STATE: Question screen -->
-  <div x-show="state==='question'" x-transition.opacity.duration.300ms class="flex-1 flex flex-col z-10 max-w-2xl mx-auto w-full h-screen">
+  <div x-show="state==='question'" x-transition.opacity.duration.300ms
+       class="flex-1 flex flex-col z-10 max-w-2xl mx-auto w-full" style="min-height: 0;">
 
     <!-- Top bar: timer + progress -->
     <div class="bg-white/90 backdrop-blur-xl px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-2 border-b border-slate-100 shadow-sm shrink-0 rounded-b-[2rem]">
@@ -66,7 +68,8 @@
     </div>
 
     <!-- Question Content Area -->
-    <div class="flex-1 flex flex-col px-4 py-6 sm:p-8 overflow-y-auto overflow-x-hidden">
+    <div class="flex-1 flex flex-col px-4 py-4 sm:p-8 overflow-y-auto overflow-x-hidden"
+         style="min-height: 0; -webkit-overflow-scrolling: touch;">
 
       <div class="flex-1 flex flex-col items-center justify-center w-full">
         <!-- Image -->
@@ -114,9 +117,8 @@
       </div>
 
       <!-- Answer Buttons Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full shrink-0 pb-4">
-        <!-- Option Colors Array: We can dynamically assign colors based on index -->
-        <template x-for="(ans, i) in question.answers" :key="i">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full shrink-0 pb-6">
+        <template x-for="(ans, i) in displayAnswers" :key="i">
           <button
             @click="submitAnswer(ans.text)"
             :disabled="answered"
@@ -176,6 +178,7 @@ function playStudent(pin, playerId, lang) {
     ws: null,
     state: 'waiting',
     question: {},
+    displayAnswers: [],
     qIndex: 0,
     qTotal: 0,
     timeLeft: 30,
@@ -203,14 +206,25 @@ function playStudent(pin, playerId, lang) {
         this.selectedAnswer = '';
         this.earnedPoints = 0;
         this.startMs = Date.now();
+        // Shuffle answers (Fisher-Yates)
+        const arr = [...(msg.question.answers || [])];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        this.displayAnswers = arr;
         this.startTimer();
       }
       if (msg.type === 'answer_result') {
         this.earnedPoints = msg.earned_points;
         this.totalScore = msg.total_score;
-        // reveal correct answers
-        if (this.question.answers) {
-          this.question.answers = msg.answers;
+        // Reveal is_correct on shuffled order (match by text)
+        if (msg.answers && this.displayAnswers.length) {
+          const correctMap = {};
+          msg.answers.forEach(a => { correctMap[a.text] = a.is_correct; });
+          this.displayAnswers = this.displayAnswers.map(a => ({
+            ...a, is_correct: correctMap[a.text] ?? false,
+          }));
         }
       }
       if (msg.type === 'game_over') {
