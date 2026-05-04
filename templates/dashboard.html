@@ -13,10 +13,25 @@
 <body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/20">
 
   <!-- Sidebar + Main layout -->
-  <div class="flex min-h-screen">
+  <div class="flex min-h-screen" x-data="{sidebarOpen: false}">
+
+    <!-- Mobile overlay -->
+    <div x-show="sidebarOpen" @click="sidebarOpen=false"
+         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 lg:hidden"
+         x-transition:enter="transition-opacity duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         style="display:none"></div>
 
     <!-- Sidebar -->
-    <aside class="w-72 bg-white border-r border-slate-100 flex flex-col py-8 px-5 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-10 animate-fade-in-up">
+    <aside class="fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 flex flex-col py-8 px-5 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-30 transition-transform duration-300 animate-fade-in-up overflow-y-auto relative"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+      <!-- Close button (mobile only) -->
+      <button @click="sidebarOpen=false" class="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors text-sm font-bold">✕</button>
+
       <!-- Башкы бетке шилтеме -->
       <a href="/" class="flex items-center gap-3 mb-10 px-2 group cursor-pointer decoration-transparent" title="Башкы бетке кайтуу">
         <div class="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-xl shadow-inner group-hover:scale-105 group-hover:bg-primary/20 transition-all duration-300">🦉</div>
@@ -61,7 +76,19 @@
     </aside>
 
     <!-- Main content -->
-    <main class="flex-1 p-8 lg:p-10 overflow-auto">
+    <main class="flex-1 p-4 lg:p-10 overflow-auto lg:ml-0">
+
+      <!-- Mobile top bar -->
+      <div class="lg:hidden flex items-center justify-between mb-6 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
+        <button @click="sidebarOpen=true" class="flex items-center justify-center w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-600 font-bold text-lg">☰</button>
+        <a href="/" class="flex items-center gap-2 decoration-transparent">
+          <div class="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-base">🦉</div>
+          <span class="text-lg font-black text-slate-800">{{appName}}</span>
+        </a>
+        <a href="/logout" class="flex items-center justify-center w-9 h-9 bg-red-50 hover:bg-red-100 rounded-xl transition-colors text-red-400 text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </a>
+      </div>
 
       {{with .Data}}
       

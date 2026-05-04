@@ -38,12 +38,14 @@
     </a>
     
     <div class="flex items-center gap-4">
-      <!-- Lang switcher -->
+      <!-- Lang switcher desktop -->
       <div class="hidden sm:flex gap-1 text-sm bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
         <a href="/lang/ky" class="px-3 py-1.5 rounded-lg transition-colors font-medium {{if eq .Lang "ky"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900 hover:bg-slate-200/50{{end}}">KY</a>
         <a href="/lang/ru" class="px-3 py-1.5 rounded-lg transition-colors font-medium {{if eq .Lang "ru"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900 hover:bg-slate-200/50{{end}}">RU</a>
         <a href="/lang/en" class="px-3 py-1.5 rounded-lg transition-colors font-medium {{if eq .Lang "en"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900 hover:bg-slate-200/50{{end}}">EN</a>
       </div>
+      <!-- Lang switcher mobile -->
+      <button onclick="openLangModal()" class="sm:hidden flex items-center justify-center w-9 h-9 bg-slate-100/80 rounded-xl border border-slate-200/50 text-slate-600 hover:bg-slate-200 transition-colors text-base font-bold">🌍</button>
       
       {{if .TeacherID}}
         <a href="/dashboard" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 flex items-center gap-2">
@@ -58,66 +60,307 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <main class="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20 text-center z-10 relative">
-    
-    <div class="mb-6 animate-bounce" style="animation-duration: 3s;">
-      <div class="w-24 h-24 md:w-28 md:h-28 bg-white rounded-full flex items-center justify-center text-6xl md:text-7xl shadow-xl shadow-primary/10 border-4 border-white/50 ring-2 ring-primary/20 mx-auto">🦉</div>
-    </div>
-    
-    <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight animate-fade-in-up" style="animation-delay: 0.1s">
-      <span class="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-        {{appName}}
-      </span>
-    </h1>
-    
-    <p class="text-lg md:text-xl text-slate-600 mb-12 max-w-lg mx-auto font-medium leading-relaxed animate-fade-in-up" style="animation-delay: 0.2s">
-      {{t .Lang "landing_hero"}}
-    </p>
+  <main class="flex flex-col z-10 relative">
 
-    <!-- Join form Card -->
-    <div class="w-full max-w-md animate-fade-in-up" style="animation-delay: 0.3s" x-data="{pin:'', loading:false}">
-      <div class="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white p-8 md:p-10 relative overflow-hidden">
-        
-        <!-- Inner glow -->
-        <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
-        
-        <h2 class="text-xl font-bold mb-6 text-center text-slate-700">{{t .Lang "join_game"}}</h2>
-        
-        <form action="/join" method="GET" class="relative z-10" @submit="loading=true">
-          <input
-            type="text"
-            name="pin"
-            x-model="pin"
-            @input="pin=pin.replace(/\D/g,'').slice(0,6)"
-            class="w-full text-center text-5xl font-black tracking-[0.2em] pl-[0.2em] py-5 bg-slate-50 focus:bg-white border-2 border-slate-200 focus:border-primary rounded-2xl transition-all focus:ring-4 focus:ring-primary/20 mb-6 placeholder:text-slate-200 text-slate-800"
-            placeholder="000000"
-            maxlength="6"
-            autocomplete="off"
-            required
-          />
-          <button type="submit" 
-                  :disabled="pin.length !== 6 || loading"
-                  class="w-full bg-primary hover:bg-primary-hover disabled:bg-slate-300 disabled:shadow-none text-white text-xl font-black py-4 rounded-2xl shadow-lg shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 group hover:-translate-y-1 disabled:transform-none">
-            <span x-show="!loading">{{t .Lang "join"}}</span>
-            <span x-show="!loading" class="text-2xl transition-transform group-hover:translate-x-1.5">→</span>
-            <svg x-show="loading" class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </button>
-        </form>
+    <!-- ===== HERO ===== -->
+    <section class="min-h-[calc(100vh-72px)] flex flex-col items-center justify-center px-4 py-12 md:py-20 text-center">
+
+      <div class="mb-6 animate-bounce" style="animation-duration: 3s;">
+        <div class="w-24 h-24 md:w-28 md:h-28 bg-white rounded-full flex items-center justify-center text-6xl md:text-7xl shadow-xl shadow-primary/10 border-4 border-white/50 ring-2 ring-primary/20 mx-auto">🦉</div>
       </div>
-    </div>
+
+      <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight animate-fade-in-up" style="animation-delay: 0.1s">
+        <span class="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+          {{appName}}
+        </span>
+      </h1>
+
+      <p class="text-lg md:text-xl text-slate-600 mb-12 max-w-lg mx-auto font-medium leading-relaxed animate-fade-in-up" style="animation-delay: 0.2s">
+        {{t .Lang "landing_hero"}}
+      </p>
+
+      <!-- Join form -->
+      <div class="w-full max-w-md animate-fade-in-up" style="animation-delay: 0.3s" x-data="{pin:'', loading:false}">
+        <div class="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white p-8 md:p-10 relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+          <h2 class="text-xl font-bold mb-6 text-center text-slate-700">{{t .Lang "join_game"}}</h2>
+          <form action="/join" method="GET" class="relative z-10" @submit="loading=true">
+            <input
+              type="text" name="pin" x-model="pin"
+              @input="pin=pin.replace(/\D/g,'').slice(0,6)"
+              class="w-full text-center text-5xl font-black tracking-[0.2em] pl-[0.2em] py-5 bg-slate-50 focus:bg-white border-2 border-slate-200 focus:border-primary rounded-2xl transition-all focus:ring-4 focus:ring-primary/20 mb-6 placeholder:text-slate-200 text-slate-800"
+              placeholder="000000" maxlength="6" autocomplete="off" required/>
+            <button type="submit"
+                    :disabled="pin.length !== 6 || loading"
+                    class="w-full bg-primary hover:bg-primary-hover disabled:bg-slate-300 disabled:shadow-none text-white text-xl font-black py-4 rounded-2xl shadow-lg shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 group hover:-translate-y-1 disabled:transform-none">
+              <span x-show="!loading">{{t .Lang "join"}}</span>
+              <span x-show="!loading" class="text-2xl transition-transform group-hover:translate-x-1.5">→</span>
+              <svg x-show="loading" class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display:none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Scroll hint -->
+      <a href="#about" class="mt-14 flex flex-col items-center gap-2 text-slate-400 hover:text-primary transition-colors group">
+        <span class="text-xs font-semibold uppercase tracking-widest">
+          {{if eq .Lang "ky"}}Көбүрөөк билүү{{else if eq .Lang "ru"}}Узнать больше{{else}}Learn more{{end}}
+        </span>
+        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </a>
+    </section>
+
+    <!-- ===== ABOUT ===== -->
+    <section id="about" class="py-20 px-4 bg-white/60 backdrop-blur-sm">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
+            {{if eq .Lang "ky"}}Платформа жөнүндө{{else if eq .Lang "ru"}}О платформе{{else}}About{{end}}
+          </span>
+          <h2 class="text-4xl md:text-5xl font-black text-slate-800 mb-5">
+            {{if eq .Lang "ky"}}{{appName}} деген эмне?{{else if eq .Lang "ru"}}Что такое {{appName}}?{{else}}What is {{appName}}?{{end}}
+          </h2>
+          <p class="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+            {{if eq .Lang "ky"}}BilimQuiz — мугалимдер үчүн интерактивдүү викторина платформасы. Kahoot сыяктуу, бирок кыргыз билим берүү системасы үчүн жасалган.{{else if eq .Lang "ru"}}BilimQuiz — интерактивная викторина платформа для учителей. Как Kahoot, но созданная для кыргызской системы образования.{{else}}BilimQuiz is an interactive quiz platform for teachers. Like Kahoot, but built for the Kyrgyz education system.{{end}}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10 rounded-3xl p-8 hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300">
+            <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-sm">🎯</div>
+            <h3 class="text-xl font-black text-slate-800 mb-3">
+              {{if eq .Lang "ky"}}Эмне үчүн?{{else if eq .Lang "ru"}}Для чего?{{else}}What for?{{end}}
+            </h3>
+            <p class="text-slate-500 leading-relaxed text-sm">
+              {{if eq .Lang "ky"}}Сабакты кызыктуу жана интерактивдүү кылуу үчүн. Окуучулардын билимин реалдуу убакытта текшерүүгө мүмкүндүк берет.{{else if eq .Lang "ru"}}Сделать урок увлекательным и интерактивным. Позволяет проверять знания учеников в реальном времени.{{else}}Make lessons engaging and interactive. Check students' knowledge in real time.{{end}}
+            </p>
+          </div>
+
+          <div class="bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/10 rounded-3xl p-8 hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300">
+            <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-sm">⚡</div>
+            <h3 class="text-xl font-black text-slate-800 mb-3">
+              {{if eq .Lang "ky"}}Кантип иштейт?{{else if eq .Lang "ru"}}Как работает?{{else}}How does it work?{{end}}
+            </h3>
+            <p class="text-slate-500 leading-relaxed text-sm">
+              {{if eq .Lang "ky"}}Мугалим оюн түзөт → PIN генерацияланат → Окуучулар телефон аркылуу кошулат → Реалдуу убакытта жарыш башталат.{{else if eq .Lang "ru"}}Учитель создаёт игру → генерируется PIN → Ученики подключаются через телефон → Соревнование в реальном времени.{{else}}Teacher creates a game → PIN is generated → Students join via phone → Real-time competition begins.{{end}}
+            </p>
+          </div>
+
+          <div class="bg-gradient-to-br from-success/5 to-success/10 border border-success/10 rounded-3xl p-8 hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300">
+            <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-sm">👩‍🏫</div>
+            <h3 class="text-xl font-black text-slate-800 mb-3">
+              {{if eq .Lang "ky"}}Кимдерге керек?{{else if eq .Lang "ru"}}Кому нужно?{{else}}Who needs it?{{end}}
+            </h3>
+            <p class="text-slate-500 leading-relaxed text-sm">
+              {{if eq .Lang "ky"}}Мектеп мугалимдери, университет окутуучулары жана билим берүү чөйрөсүндөгү ар кандай адистер.{{else if eq .Lang "ru"}}Школьные учителя, университетские преподаватели и специалисты в сфере образования.{{else}}School teachers, university lecturers and education professionals.{{end}}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <section class="py-20 px-4">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block bg-info/10 text-info text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
+            {{if eq .Lang "ky"}}Колдонуу{{else if eq .Lang "ru"}}Использование{{else}}How it works{{end}}
+          </span>
+          <h2 class="text-4xl font-black text-slate-800">
+            {{if eq .Lang "ky"}}3 жөнөкөй кадам{{else if eq .Lang "ru"}}3 простых шага{{else}}3 simple steps{{end}}
+          </h2>
+        </div>
+
+        <div class="flex flex-col gap-5">
+          <div class="flex items-start gap-5 bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+            <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl font-black shrink-0 shadow-lg shadow-primary/30">1</div>
+            <div class="flex-1 pt-1">
+              <h3 class="text-lg font-black text-slate-800 mb-1">
+                {{if eq .Lang "ky"}}Оюн түзүңүз{{else if eq .Lang "ru"}}Создайте игру{{else}}Create a game{{end}}
+              </h3>
+              <p class="text-slate-500 text-sm leading-relaxed">
+                {{if eq .Lang "ky"}}Google аккаунту аркылуу кириңиз, суроо-жооптордон турган викторина түзүңүз. AI жардамы менен суроолорду автоматтык жаратууга болот.{{else if eq .Lang "ru"}}Войдите через Google, создайте викторину с вопросами и ответами. Можно генерировать вопросы автоматически с помощью AI.{{else}}Sign in with Google, create a quiz. AI can generate questions automatically.{{end}}
+              </p>
+            </div>
+            <div class="text-4xl hidden sm:block shrink-0">📝</div>
+          </div>
+
+          <div class="flex items-start gap-5 bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+            <div class="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center text-white text-2xl font-black shrink-0 shadow-lg shadow-accent/30">2</div>
+            <div class="flex-1 pt-1">
+              <h3 class="text-lg font-black text-slate-800 mb-1">
+                {{if eq .Lang "ky"}}Окуучуларды чакырыңыз{{else if eq .Lang "ru"}}Пригласите учеников{{else}}Invite students{{end}}
+              </h3>
+              <p class="text-slate-500 text-sm leading-relaxed">
+                {{if eq .Lang "ky"}}Уникалдуу PIN код же QR-код бериңиз. Окуучулар каалаган телефон, планшет же компьютер аркылуу кошула алат.{{else if eq .Lang "ru"}}Поделитесь PIN-кодом или QR-кодом. Ученики могут подключиться с любого телефона, планшета или компьютера.{{else}}Share the PIN code or QR code. Students join from any device.{{end}}
+              </p>
+            </div>
+            <div class="text-4xl hidden sm:block shrink-0">📱</div>
+          </div>
+
+          <div class="flex items-start gap-5 bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+            <div class="w-14 h-14 bg-success rounded-2xl flex items-center justify-center text-white text-2xl font-black shrink-0 shadow-lg shadow-success/30">3</div>
+            <div class="flex-1 pt-1">
+              <h3 class="text-lg font-black text-slate-800 mb-1">
+                {{if eq .Lang "ky"}}Ойноңуз жана натыйжаны көрүңүз{{else if eq .Lang "ru"}}Играйте и смотрите результаты{{else}}Play and see results{{end}}
+              </h3>
+              <p class="text-slate-500 text-sm leading-relaxed">
+                {{if eq .Lang "ky"}}Реалдуу убакытта мониторинг, лидерборд жана ар бир окуучунун жыйынтыгын тарых боюнча карап чыгуу.{{else if eq .Lang "ru"}}Мониторинг в реальном времени, таблица лидеров и детальная история результатов каждого ученика.{{else}}Real-time monitoring, leaderboard and detailed history of each student's results.{{end}}
+              </p>
+            </div>
+            <div class="text-4xl hidden sm:block shrink-0">🏆</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== OTHER SERVICES ===== -->
+    <section class="py-20 px-4 bg-white/60 backdrop-blur-sm">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block bg-warning/10 text-amber-600 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
+            {{if eq .Lang "ky"}}BilimAI экожүйеси{{else if eq .Lang "ru"}}Экосистема BilimAI{{else}}BilimAI Ecosystem{{end}}
+          </span>
+          <h2 class="text-4xl font-black text-slate-800 mb-4">
+            {{if eq .Lang "ky"}}Башка кызматтар{{else if eq .Lang "ru"}}Другие сервисы{{else}}Other Services{{end}}
+          </h2>
+          <p class="text-slate-500 max-w-xl mx-auto">
+            {{if eq .Lang "ky"}}BilimAI платформасынын билим берүү куралдары{{else if eq .Lang "ru"}}Образовательные инструменты платформы BilimAI{{else}}Educational tools from the BilimAI platform{{end}}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <a href="https://bilimai.kg" target="_blank" rel="noopener"
+             class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex items-start gap-4 decoration-transparent">
+            <div class="w-12 h-12 bg-gradient-to-br from-primary to-primary-hover rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-md shadow-primary/30 group-hover:scale-110 transition-transform">🧠</div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-base font-black text-slate-800 group-hover:text-primary transition-colors">BilimAI</span>
+                <span class="text-slate-300 text-sm">↗</span>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                {{if eq .Lang "ky"}}Жасалма интеллект менен билим алуунун негизги платформасы{{else if eq .Lang "ru"}}Главная платформа обучения с искусственным интеллектом{{else}}Main AI-powered learning platform{{end}}
+              </p>
+              <span class="text-[11px] text-slate-300 font-mono">bilimai.kg</span>
+            </div>
+          </a>
+
+          <a href="https://plus.bilimai.kg" target="_blank" rel="noopener"
+             class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex items-start gap-4 decoration-transparent">
+            <div class="w-12 h-12 bg-gradient-to-br from-warning to-amber-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-md shadow-warning/30 group-hover:scale-110 transition-transform">⭐</div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-base font-black text-slate-800 group-hover:text-amber-500 transition-colors">BilimAI Plus</span>
+                <span class="text-slate-300 text-sm">↗</span>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                {{if eq .Lang "ky"}}Кеңейтилген мүмкүнчүлүктөр менен Premium билим берүү чөйрөсү{{else if eq .Lang "ru"}}Премиум образовательная среда с расширенными возможностями{{else}}Premium education environment with extended features{{end}}
+              </p>
+              <span class="text-[11px] text-slate-300 font-mono">plus.bilimai.kg</span>
+            </div>
+          </a>
+
+          <a href="https://arkan-tartysh.bilimai.kg" target="_blank" rel="noopener"
+             class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex items-start gap-4 decoration-transparent">
+            <div class="w-12 h-12 bg-gradient-to-br from-success to-emerald-600 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-md shadow-success/30 group-hover:scale-110 transition-transform">🏆</div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-base font-black text-slate-800 group-hover:text-success transition-colors">Аркан Тартыш</span>
+                <span class="text-slate-300 text-sm">↗</span>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                {{if eq .Lang "ky"}}Командалар арасындагы интерактивдүү билим жарышы{{else if eq .Lang "ru"}}Интерактивное командное соревнование знаний{{else}}Interactive team knowledge competition{{end}}
+              </p>
+              <span class="text-[11px] text-slate-300 font-mono">arkan-tartysh.bilimai.kg</span>
+            </div>
+          </a>
+
+          <a href="https://camai.bilimai.kg" target="_blank" rel="noopener"
+             class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex items-start gap-4 decoration-transparent">
+            <div class="w-12 h-12 bg-gradient-to-br from-info to-blue-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-md shadow-info/30 group-hover:scale-110 transition-transform">📷</div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-base font-black text-slate-800 group-hover:text-info transition-colors">CamAI</span>
+                <span class="text-slate-300 text-sm">↗</span>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                {{if eq .Lang "ky"}}Камера аркылуу AI технологиясы менен окуу куралы{{else if eq .Lang "ru"}}Образовательный инструмент с AI через камеру{{else}}AI-powered learning tool through camera{{end}}
+              </p>
+              <span class="text-[11px] text-slate-300 font-mono">camai.bilimai.kg</span>
+            </div>
+          </a>
+
+          <a href="https://learn-lang.bilimai.kg/" target="_blank" rel="noopener"
+             class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex items-start gap-4 decoration-transparent">
+            <div class="w-12 h-12 bg-gradient-to-br from-accent to-accent-hover rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-md shadow-accent/30 group-hover:scale-110 transition-transform">🌐</div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-base font-black text-slate-800 group-hover:text-accent transition-colors">LearnLang</span>
+                <span class="text-slate-300 text-sm">↗</span>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                {{if eq .Lang "ky"}}Тил үйрөнүү платформасы — кыргыз, орус, англис тилдери{{else if eq .Lang "ru"}}Платформа изучения языков — кыргызский, русский, английский{{else}}Language learning — Kyrgyz, Russian, English{{end}}
+              </p>
+              <span class="text-[11px] text-slate-300 font-mono">learn-lang.bilimai.kg</span>
+            </div>
+          </a>
+
+          <div class="bg-gradient-to-br from-primary/5 via-accent/5 to-info/5 rounded-3xl p-6 border border-primary/10 flex items-center justify-center text-center">
+            <div>
+              <div class="text-4xl mb-3">🦉</div>
+              <div class="text-sm font-black text-slate-700 mb-1">{{appName}}</div>
+              <p class="text-xs text-slate-400">
+                {{if eq .Lang "ky"}}Сиз азыр бул жердесиз!{{else if eq .Lang "ru"}}Вы сейчас здесь!{{else}}You are here!{{end}}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER / AUTHOR ===== -->
+    <footer class="py-16 px-4 bg-slate-900 text-white">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-5 shadow-lg">🦉</div>
+        <div class="text-3xl font-black mb-2">{{appName}}</div>
+        <p class="text-slate-400 mb-10 text-sm">
+          {{if eq .Lang "ky"}}Интерактивдүү билим берүү платформасы{{else if eq .Lang "ru"}}Интерактивная образовательная платформа{{else}}Interactive Educational Platform{{end}}
+        </p>
+
+        <div class="inline-flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-10 hover:bg-white/10 transition-colors">
+          <div class="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-lg shadow-md shrink-0">👩‍💼</div>
+          <div class="text-left">
+            <div class="text-[11px] text-slate-400 uppercase tracking-widest mb-0.5">
+              {{if eq .Lang "ky"}}Автор{{else if eq .Lang "ru"}}Автор{{else}}Author{{end}}
+            </div>
+            <div class="font-black text-white text-base">Мусаева Назгүл Жолдошовна</div>
+          </div>
+        </div>
+
+        <div class="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <span>© 2025 {{appName}}.
+            {{if eq .Lang "ky"}}Бардык укуктар корголгон.{{else if eq .Lang "ru"}}Все права защищены.{{else}}All rights reserved.{{end}}
+          </span>
+          <a href="https://bilimai.kg" target="_blank" rel="noopener" class="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors decoration-transparent">
+            <span class="text-sm">🧠</span> BilimAI
+          </a>
+        </div>
+      </div>
+    </footer>
+
   </main>
 
   <!-- Lang modal -->
-  <div id="lang-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-    <div class="bg-white rounded-[2rem] p-8 w-[90%] max-w-sm text-center shadow-2xl border border-slate-100 transform scale-95 transition-transform duration-300" id="lang-modal-content">
+  <div id="lang-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300" onclick="if(event.target===this)closeLangModal()">
+    <div class="bg-white rounded-[2rem] p-8 w-[90%] max-w-sm text-center shadow-2xl border border-slate-100 transform scale-95 transition-transform duration-300 relative" id="lang-modal-content">
+      <button onclick="closeLangModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors text-sm font-bold">✕</button>
       <div class="w-16 h-16 bg-primary/10 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4">🌍</div>
       <h2 class="text-2xl font-black mb-2 text-slate-800">{{t .Lang "choose_language"}}</h2>
       <p class="text-sm text-slate-500 mb-6">Тилди тандаңыз / Выберите язык / Choose language</p>
-      
+
       <div class="flex flex-col gap-3">
         <a href="/lang/ky" class="w-full bg-slate-50 hover:bg-primary/10 hover:border-primary/30 border border-slate-100 text-slate-700 font-bold py-3.5 px-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-3">
           <span class="text-2xl">🇰🇬</span> Кыргызча
@@ -133,17 +376,25 @@
   </div>
 
   <script>
+    function openLangModal(){
+      const modal = document.getElementById('lang-modal');
+      const content = document.getElementById('lang-modal-content');
+      modal.classList.remove('opacity-0','pointer-events-none');
+      content.classList.remove('scale-95');
+      content.classList.add('scale-100');
+    }
+    function closeLangModal(){
+      const modal = document.getElementById('lang-modal');
+      const content = document.getElementById('lang-modal-content');
+      modal.classList.add('opacity-0','pointer-events-none');
+      content.classList.add('scale-95');
+      content.classList.remove('scale-100');
+    }
     (function(){
       if(!document.cookie.includes('lang=')){
         const code=(navigator.language||'').split('-')[0].toLowerCase();
         if(!['ky','ru','en'].includes(code)){
-          const modal = document.getElementById('lang-modal');
-          const content = document.getElementById('lang-modal-content');
-          
-          // Show with smooth animation
-          modal.classList.remove('opacity-0', 'pointer-events-none');
-          content.classList.remove('scale-95');
-          content.classList.add('scale-100');
+          openLangModal();
         }
       }
     })();
