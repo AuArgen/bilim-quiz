@@ -46,7 +46,7 @@ internal/
     engine.go                # startGame → runAsync → handleAnswer → упай эсептөө
     types.go                 # GameState, Message, SnapshotQuestion, AnswerMsg
   handlers/
-    render.go                # LoadTemplates + Render(w,r,name,data) + funcMap (t, appName, inc, fmtTime, ms2s, jsonQuestions, jsonPlayers)
+    render.go                # LoadTemplates + Render(w,r,name,data) + funcMap (t, appName, appURL, inc, fmtTime, ms2s, jsStr, jsonQuestions, jsonPlayers)
     auth.go                  # GoogleLogin (?next= колдоосу), GoogleCallback (redirect_after_login), Logout
     teacher.go               # Dashboard, SaveGeminiKey
     game.go                  # NewGame, CreateGame, EditGame, UpdateGame, DeleteGame, AddQuestion, UpdateQuestion, DeleteQuestion
@@ -67,6 +67,8 @@ internal/
     qr.go                    # GET /qr/{pin} → PNG image
   ai/
     gemini.go                # GenerateQuestions(ctx, apiKey, topic, count) → []GeneratedQuestion
+  onboarding/
+    demo.go                  # SeedDemoGame — жаңы мугалимге демо математика оюну (10 суроо) жаратат
 migrations/
   001_init.sql               # teachers, games, questions, answers + update_updated_at trigger
   002_sessions.sql           # game_sessions, session_questions_snapshot, session_answers_snapshot, session_players, player_answers
@@ -74,7 +76,7 @@ migrations/
 locales/
   ky.json / ru.json / en.json  # 64 UI текст ачкычы (share_game, share_link, share_copy, share_copied, shared_start_session, shared_logged_in кирет)
 templates/
-  landing.html               # Башкы бет: PIN форма + Google login + lang modal
+  landing.html               # Башкы бет: PIN форма + Google login + lang modal + толук SEO meta (OG, Twitter, hreflang, JSON-LD)
   dashboard.html             # Мугалим кабинети: stats + games table + Gemini key + 🔗 Share dropdown
   game_builder.html          # Оюн редактору: сол панел (суроолор) + форма (Alpine.js)
   join.html                  # Окуучу: PIN киргизүү
@@ -87,11 +89,13 @@ templates/
   history_list.html          # Тарых: сессиялар тизмеси
   history_session.html       # Тарых: сессиянын оюнчулар рейтинги
   history_player.html        # Тарых: жеке окуучунун жооп аналитикасы
-  shared_game.html           # Бөлүшүлгөн оюн: аталышы, автору, суроолор саны + Сессия баштоо
+  shared_game.html           # Бөлүшүлгөн оюн: аталышы, автору, суроолор саны + Сессия баштоо + OG теги
 static/
   css/app.css                # Tailwind utility класстары (btn-primary, card, input, label...)
   js/app.js                  # compressAndUpload (Canvas API), createWS (WebSocket helper)
   audio/lobby.mp3            # BGM — өзүңүз кошуңуз (жок болсо тынч иштейт)
+  robots.txt                 # Crawler: / рухсат, башкы беттер тыюу; sitemap URL'ы
+  sitemap.xml                # Статикалык sitemap — landing + hreflang (ky/ru/en)
 player_images/               # Окуучулардын аватарлары (Base64→JPEG)
 ```
 
@@ -101,6 +105,8 @@ player_images/               # Окуучулардын аватарлары (Ba
 | URL | Метод | Аракет |
 |-----|-------|--------|
 | `/` | GET | Landing page |
+| `/robots.txt` | GET | SEO crawler эрежелери |
+| `/sitemap.xml` | GET | XML sitemap |
 | `/auth/google` | GET | Google OAuth redirect (`?next=` param колдоосу бар) |
 | `/auth/google/callback` | GET | OAuth callback → session'дон redirect URL окуп redirect |
 | `/logout` | GET | Session тазалоо |
@@ -196,9 +202,11 @@ static:  earned = question.static_score (эгер туура болсо)
 |---------|----------|
 | `t .Lang "key"` | Котормо: `{{t .Lang "login"}}` |
 | `appName` | `.env APP_NAME` же `"BilimQuiz"` |
+| `appURL` | `.env APP_URL` же `"https://quiz.bilimai.kg"` — SEO canonical/OG URL'лары үчүн |
 | `inc $i` | `$i + 1` (таблица номерлоо) |
 | `fmtTime $t` | `02.01.2006 15:04` форматы |
 | `ms2s $ms` | Миллисекунддан секундга: `"4.2"` |
+| `jsStr $s` | `string → template.JS` (JSON-encoded, XSS-safe) |
 | `jsonQuestions .Questions` | `[]Question → template.JS` (game_builder) |
 | `jsonPlayers .Players .Progress .Scores` | `[]SessionPlayer + maps → template.JS` (monitor) |
 
@@ -214,6 +222,7 @@ static:  earned = question.static_score (эгер туура болсо)
 ```env
 APP_NAME=BilimQuiz          # Сайт аталышы (logo жана title)
 APP_PORT=8080
+APP_URL=https://quiz.bilimai.kg  # Canonical URL — SEO meta теги, OG, sitemap үчүн
 DB_URL=postgres://...       # pgx connection string
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
@@ -238,3 +247,7 @@ PLAYER_IMAGES_DIR=./player_images
 6. **Post-login redirect** — `RequireAuth` middleware авторизациясыз кирүүдө `r.RequestURI` session'го (`redirect_after_login` ачкычы) сактайт да `/auth/google`'га redirect кылат. `GoogleCallback` ийгиликтүү логин кийин ошол URL'га кайтат, болбосо `/dashboard`'га.
 
 7. **Game share link** — Ар бир оюндун `share_token` UUID'си бар (auto-generated). Dashboard'дан `🔗` баскычы менен `http://host/shared/{token}` шилтемесин clipboard'го көчүрүүгө болот. Шилтеме менен кирген адам авторизациядан өткөндөн кийин оюнду өзүнүн атынан сессия катары баштай алат.
+
+8. **Onboarding demo** — Жаңы мугалим Google аркылуу биринчи жолу кирсе, `onboarding.SeedDemoGame()` автоматтык 10 суроолуу математика оюнун жаратат. Мугалим дароо пробалап көрө алат.
+
+9. **SEO архитектурасы** — Башкы бет (`/`) гана индекстелет: толук `<meta description>`, Open Graph, Twitter Card, hreflang (ky/ru/en), canonical URL, Schema.org JSON-LD. Башка бардык беттер `<meta name="robots" content="noindex, nofollow">`. `/robots.txt` жана `/sitemap.xml` `static/` папкасынан серверленет. Домен `APP_URL` env'ден (`.env APP_URL`) алынат, болбосо `https://quiz.bilimai.kg` default.
