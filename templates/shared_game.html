@@ -4,7 +4,24 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex, nofollow"/>
+
   <title>{{appName}} — {{with .Data}}{{.Game.Title}}{{end}}</title>
+  {{with .Data}}
+  <meta name="description" content="{{.Game.Title}} — {{appName}}{{if .Game.Description}} | {{.Game.Description}}{{end}}"/>
+  <!-- Open Graph (social sharing) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="{{.Game.Title}} — {{appName}}"/>
+  <meta property="og:description" content="{{if .Game.Description}}{{.Game.Description}}{{else}}{{appName}}-де интерактивдүү викторина{{end}}"/>
+  <meta property="og:image" content="{{appURL}}/static/images/icon.jpg"/>
+  <meta property="og:site_name" content="{{appName}}"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="{{.Game.Title}} — {{appName}}"/>
+  <meta name="twitter:image" content="{{appURL}}/static/images/icon.jpg"/>
+  {{end}}
+
+  <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg"/>
+  <link rel="apple-touch-icon" href="/static/images/icon.jpg"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/static/css/app.css"/>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}}</script>

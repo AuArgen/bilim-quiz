@@ -31,6 +31,17 @@ func LoadTemplates(dir string) error {
 			}
 			return name
 		},
+		"appURL": func() string {
+			u := os.Getenv("APP_URL")
+			if u == "" {
+				return "https://quiz.bilimai.kg"
+			}
+			// Trailing slash жок
+			for len(u) > 0 && u[len(u)-1] == '/' {
+				u = u[:len(u)-1]
+			}
+			return u
+		},
 		"inc":   func(i int) int { return i + 1 },
 		"ms2s": func(ms int) string { return fmt.Sprintf("%.1f", float64(ms)/1000) },
 		"jsonPlayers": func(players []repository.SessionPlayer, progress, scores map[int]int) template.JS {

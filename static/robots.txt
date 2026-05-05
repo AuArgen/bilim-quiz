@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /games/
+Disallow: /questions/
+Disallow: /play/
+Disallow: /teacher/
+Disallow: /ws/
+Disallow: /history/
+Disallow: /api/
+Disallow: /shared/
+Disallow: /lobby/
+Disallow: /result/
+Disallow: /upload/
+Disallow: /auth/
+
+Sitemap: https://quiz.bilimai.kg/sitemap.xml

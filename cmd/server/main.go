@@ -76,6 +76,15 @@ func main() {
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	r.Handle("/player_images/*", http.StripPrefix("/player_images/", http.FileServer(http.Dir("./player_images"))))
 
+	// SEO
+	r.Get("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/robots.txt")
+	})
+	r.Get("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		http.ServeFile(w, r, "./static/sitemap.xml")
+	})
+
 	// QR code
 	r.Get("/qr/{pin}", qr.Handler)
 

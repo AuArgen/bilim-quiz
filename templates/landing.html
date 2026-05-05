@@ -4,7 +4,64 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{appName}}</title>
+
+  <!-- Primary SEO -->
+  <title>{{appName}} — {{if eq .Lang "ky"}}Интерактивдүү Викторина Платформасы{{else if eq .Lang "ru"}}Интерактивная Викторина Платформа{{else}}Interactive Quiz Platform{{end}}</title>
+  <meta name="description" content="{{if eq .Lang "ky"}}BilimQuiz — мугалимдер үчүн интерактивдүү викторина платформасы. Kahoot сыяктуу, бирок кыргыз билим берүү үчүн. AI менен суроолор жаратыңыз, реалдуу убакытта оюн баштаңыз.{{else if eq .Lang "ru"}}BilimQuiz — интерактивная викторина платформа для учителей. Как Kahoot, но для кыргызского образования. Создавайте вопросы с AI, играйте в реальном времени.{{else}}BilimQuiz — interactive quiz platform for teachers. Like Kahoot, built for Kyrgyz education. Generate questions with AI, play in real time.{{end}}"/>
+  <meta name="keywords" content="BilimQuiz, викторина, quiz, интерактивдүү сабак, Kahoot, мугалим, окутуу, кыргызча, образование, bilim, bilimai"/>
+  <meta name="author" content="BilimAI"/>
+  <meta name="robots" content="index, follow"/>
+
+  <!-- Canonical & hreflang -->
+  <link rel="canonical" href="{{appURL}}/"/>
+  <link rel="alternate" hreflang="ky" href="{{appURL}}/?lang=ky"/>
+  <link rel="alternate" hreflang="ru" href="{{appURL}}/?lang=ru"/>
+  <link rel="alternate" hreflang="en" href="{{appURL}}/?lang=en"/>
+  <link rel="alternate" hreflang="x-default" href="{{appURL}}/"/>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="{{appURL}}/"/>
+  <meta property="og:site_name" content="{{appName}}"/>
+  <meta property="og:title" content="{{appName}} — {{if eq .Lang "ky"}}Интерактивдүү Викторина Платформасы{{else if eq .Lang "ru"}}Интерактивная Викторина Платформа{{else}}Interactive Quiz Platform{{end}}"/>
+  <meta property="og:description" content="{{if eq .Lang "ky"}}Мугалимдер үчүн интерактивдүү викторина платформасы. AI менен суроолор жаратыңыз, реалдуу убакытта оюн баштаңыз.{{else if eq .Lang "ru"}}Интерактивная платформа викторин для учителей. Генерируйте вопросы с AI, начинайте игру в реальном времени.{{else}}Interactive quiz platform for teachers. Generate questions with AI, start games in real time.{{end}}"/>
+  <meta property="og:image" content="{{appURL}}/static/images/icon.jpg"/>
+  <meta property="og:image:width" content="512"/>
+  <meta property="og:image:height" content="512"/>
+  <meta property="og:locale" content="{{if eq .Lang "ru"}}ru_RU{{else if eq .Lang "en"}}en_US{{else}}ky_KG{{end}}"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="{{appName}} — {{if eq .Lang "ky"}}Интерактивдүү Викторина{{else if eq .Lang "ru"}}Интерактивная Викторина{{else}}Interactive Quiz{{end}}"/>
+  <meta name="twitter:description" content="{{if eq .Lang "ky"}}Kahoot сыяктуу платформа — кыргыз мугалимдери үчүн. AI суроолор + реалдуу убакыт.{{else if eq .Lang "ru"}}Платформа как Kahoot — для кыргызских учителей. AI вопросы + реальное время.{{else}}Kahoot-like platform for Kyrgyz teachers. AI questions + real time.{{end}}"/>
+  <meta name="twitter:image" content="{{appURL}}/static/images/icon.jpg"/>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg"/>
+  <link rel="apple-touch-icon" href="/static/images/icon.jpg"/>
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "BilimQuiz",
+    "url": "{{appURL}}/",
+    "description": "Interactive quiz platform for teachers — like Kahoot but for Kyrgyz education. Supports Kyrgyz, Russian, and English.",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "inLanguage": ["ky", "ru", "en"],
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KGS" },
+    "author": { "@type": "Organization", "name": "BilimAI", "url": "https://bilimai.kg" }
+  }
+  </script>
+
+  <!-- Fonts preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/static/css/app.css"/>
