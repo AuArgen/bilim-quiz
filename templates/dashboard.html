@@ -37,9 +37,9 @@
       <div class="flex items-center gap-3 mb-10">
         <a href="/" @click="sidebarOpen=false" class="flex items-center gap-3 px-2 group cursor-pointer decoration-transparent min-w-0 flex-1" title="Башкы бетке кайтуу">
           <div class="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-xl shadow-inner group-hover:scale-105 group-hover:bg-primary/20 transition-all duration-300 shrink-0">🦉</div>
-          <span class="text-2xl font-black text-slate-800 tracking-tight group-hover:text-primary transition-colors truncate">{{appName}}</span>
+          <span class="text-xl md:text-2xl font-black text-slate-800 tracking-tight group-hover:text-primary transition-colors truncate">{{appName}}</span>
         </a>
-        <button type="button" @click.stop.prevent="sidebarOpen=false" aria-label="Close menu" class="lg:hidden z-50 ml-4 shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors text-sm font-bold">✕</button>
+        <button type="button" @click.stop.prevent="sidebarOpen=false" aria-label="Close menu" class="lg:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors text-sm font-bold">✕</button>
       </div>
 
       <nav class="flex flex-col gap-2.5 flex-1">
