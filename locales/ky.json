@@ -91,5 +91,13 @@
   "share_copy": "Көчүрүү",
   "share_copied": "Көчүрүлдү!",
   "shared_start_session": "Сессия баштоо",
-  "shared_logged_in": "Авторизацияланган"
+  "shared_logged_in": "Авторизацияланган",
+  "rate_game": "Оюнду баала",
+  "rate_placeholder": "Комментарий (милдеттүү эмес, макс. 50 символ)",
+  "rate_submit": "Жөнөтүү",
+  "rate_thanks": "Баалагандыгыңыз үчүн рахмат!",
+  "rating": "Баалоо",
+  "ratings": "Пикирлер",
+  "avg_rating": "Орточо баалоо",
+  "no_ratings": "Пикирлер жок"
 }

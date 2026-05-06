@@ -8,6 +8,7 @@
   <meta name="robots" content="noindex, nofollow"/>
   <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg"/>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/static/css/app.css"/>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
   <style>
@@ -145,10 +146,71 @@
     </div>
     {{end}}
 
+    <!-- Rating Section -->
+    {{if .Player}}
+    <div class="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-lg border border-white p-6 mb-8 animate-fade-in-up"
+         style="animation-delay: 0.45s"
+         x-data="{stars:0, hover:0, comment:'', submitted:false, submitting:false, pid:{{.Player.ID}}}">
+
+      <div x-show="!submitted">
+        <h3 class="font-black text-slate-800 text-center mb-1 flex items-center justify-center gap-2 text-lg">
+          <span>⭐</span> {{t $.Lang "rate_game"}}
+        </h3>
+
+        <!-- Stars picker -->
+        <div class="flex justify-center gap-1 my-4">
+          <template x-for="i in [1,2,3,4,5]" :key="i">
+            <button
+              type="button"
+              @click="stars = i"
+              @mouseenter="hover = i"
+              @mouseleave="hover = 0"
+              class="text-5xl leading-none transition-transform hover:scale-110 active:scale-95 focus:outline-none select-none"
+              :class="(hover || stars) >= i ? 'text-warning drop-shadow' : 'text-slate-200'">★</button>
+          </template>
+        </div>
+
+        <!-- Comment -->
+        <div class="mb-4">
+          <textarea
+            x-model="comment"
+            maxlength="50"
+            rows="2"
+            placeholder="{{t $.Lang "rate_placeholder"}}"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 bg-slate-50 font-sans">
+          </textarea>
+          <div class="text-right text-xs text-slate-400 mt-1" x-text="comment.length + '/50'"></div>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="button"
+          @click="if(stars>0 && !submitting){submitting=true; fetch('/rate/'+pid,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stars,comment})}).then(r=>{if(r.ok)submitted=true; submitting=false;}).catch(()=>{submitting=false;})}"
+          :disabled="stars===0 || submitting"
+          class="w-full py-3 rounded-xl font-black text-sm transition-all"
+          :class="stars>0 ? 'bg-primary hover:bg-violet-700 text-white shadow-md shadow-primary/20 active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
+          <span x-show="!submitting">{{t $.Lang "rate_submit"}}</span>
+          <span x-show="submitting">...</span>
+        </button>
+      </div>
+
+      <!-- Thank you -->
+      <div x-show="submitted" x-transition class="text-center py-2">
+        <div class="text-5xl mb-3">🙏</div>
+        <div class="font-black text-slate-800 text-lg mb-2">{{t $.Lang "rate_thanks"}}</div>
+        <div class="flex justify-center gap-1">
+          <template x-for="i in [1,2,3,4,5]" :key="i">
+            <span class="text-3xl leading-none" :class="stars>=i ? 'text-warning' : 'text-slate-200'">★</span>
+          </template>
+        </div>
+      </div>
+    </div>
+    {{end}}
+
     <!-- Action Button -->
     <div class="animate-fade-in-up" style="animation-delay: 0.5s">
       <a href="/" class="bg-slate-800 hover:bg-slate-900 text-white w-full text-lg font-black py-4 rounded-2xl shadow-lg shadow-slate-300 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2 group">
-        <span class="text-2xl transition-transform group-hover:-translate-x-1">←</span> 
+        <span class="text-2xl transition-transform group-hover:-translate-x-1">←</span>
         {{t $.Lang "join_game"}}
       </a>
     </div>

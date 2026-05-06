@@ -91,5 +91,13 @@
   "share_copy": "Копировать",
   "share_copied": "Скопировано!",
   "shared_start_session": "Начать сессию",
-  "shared_logged_in": "Вы авторизованы"
+  "shared_logged_in": "Вы авторизованы",
+  "rate_game": "Оцените игру",
+  "rate_placeholder": "Комментарий (не обязательно, макс. 50 символов)",
+  "rate_submit": "Отправить",
+  "rate_thanks": "Спасибо за оценку!",
+  "rating": "Оценка",
+  "ratings": "Отзывы",
+  "avg_rating": "Средняя оценка",
+  "no_ratings": "Отзывов пока нет"
 }

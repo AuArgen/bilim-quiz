@@ -38,7 +38,8 @@ internal/
     teacher.go               # Upsert (Google login), GetByID, GetStats, UpdateGeminiKey
     game.go                  # CRUD + QuestionCount JOIN + GetByShareToken
     question.go              # CRUD + ReplaceAnswers (delete-insert)
-    session.go               # Create, GetByPin, Snapshot, AddPlayer, SavePlayerAnswer, Leaderboard
+    session.go               # Create, GetByPin, Snapshot, AddPlayer, SavePlayerAnswer, Leaderboard,
+                             #   GetPlayerByID, SaveRating, GetRatings, GetRatingStats
   game/
     hub.go                   # Global Hub — rooms map[pin]*Room, GeneratePin()
     room.go                  # Room: register/unregister channels, broadcastAll, kickPlayer
@@ -46,15 +47,15 @@ internal/
     engine.go                # startGame → runAsync → handleAnswer → упай эсептөө
     types.go                 # GameState, Message, SnapshotQuestion, AnswerMsg
   handlers/
-    render.go                # LoadTemplates + Render(w,r,name,data) + funcMap (t, appName, appURL, inc, fmtTime, ms2s, jsStr, jsonQuestions, jsonPlayers)
+    render.go                # LoadTemplates + Render(w,r,name,data) + funcMap (t, appName, appURL, inc, fmtTime, ms2s, jsStr, jsonQuestions, jsonPlayers, starsStr, starsFromInt, fmtFloat)
     auth.go                  # GoogleLogin (?next= колдоосу), GoogleCallback (redirect_after_login), Logout
     teacher.go               # Dashboard, SaveGeminiKey
     game.go                  # NewGame, CreateGame, EditGame, UpdateGame, DeleteGame, AddQuestion, UpdateQuestion, DeleteQuestion
-    student.go               # JoinPage, CheckPin, LobbyPage, JoinLobby, PlayPage, ResultPage
+    student.go               # JoinPage, CheckPin, LobbyPage, JoinLobby, PlayPage, ResultPage, RateSession
     play.go                  # StartSession (PIN генерация + Snapshot), LobbyPage, LobbyPlayers, MonitorPage, PodiumPage
     shared.go                # SharedHandler: GamePage (GET /shared/{token}), StartSession (POST /shared/{token}/start)
     ws.go                    # TeacherLobbyWS, PlayerWS (WebSocket upgrade)
-    history.go               # List, SessionDetail, PlayerDetail
+    history.go               # List, SessionDetail (ratings + avgStars кирет), PlayerDetail
     ai.go                    # Generate (Gemini API → DB сактоо)
     upload.go                # UploadPlayerImage (Base64 data URI → player_images/)
   middleware/
@@ -73,8 +74,9 @@ migrations/
   001_init.sql               # teachers, games, questions, answers + update_updated_at trigger
   002_sessions.sql           # game_sessions, session_questions_snapshot, session_answers_snapshot, session_players, player_answers
   003_share_token.sql        # games.share_token UUID NOT NULL DEFAULT gen_random_uuid()
+  004_ratings.sql            # session_ratings: session_id, player_id, stars(1-5), comment(≤50), UNIQUE(player_id)
 locales/
-  ky.json / ru.json / en.json  # 64 UI текст ачкычы (share_game, share_link, share_copy, share_copied, shared_start_session, shared_logged_in кирет)
+  ky.json / ru.json / en.json  # 72 UI текст ачкычы (rate_game, rate_placeholder, rate_submit, rate_thanks, rating, ratings, avg_rating, no_ratings кирет)
 templates/
   landing.html               # Башкы бет: PIN форма + Google login + lang modal + толук SEO meta (OG, Twitter, hreflang, JSON-LD)
   dashboard.html             # Мугалим кабинети: stats + games table + Gemini key + 🔗 Share dropdown
@@ -82,12 +84,12 @@ templates/
   join.html                  # Окуучу: PIN киргизүү
   lobby_student.html         # Окуучу: ат + аватар тандоо → күтүү залы
   play_student.html          # Окуучу: суроо + жооп баскычтары + таймер (WebSocket)
-  result_student.html        # Окуучу: жыйынтык + breakdown
+  result_student.html        # Окуучу: жыйынтык + breakdown + ⭐ баалоо формасы (Alpine.js, 1-5 жылдыз + комментарий)
   lobby_teacher.html         # Мугалим: PIN/QR + оюнчулар тизмеси + баштоо
   monitor_teacher.html       # Мугалим: "тепкич" анимациясы (WebSocket live)
   podium.html                # Мугалим: 1-2-3 пьедестал + калгандар
   history_list.html          # Тарых: сессиялар тизмеси
-  history_session.html       # Тарых: сессиянын оюнчулар рейтинги
+  history_session.html       # Тарых: сессиянын оюнчулар рейтинги + ⭐ пикирлер секциясы (орточо + тизме)
   history_player.html        # Тарых: жеке окуучунун жооп аналитикасы
   shared_game.html           # Бөлүшүлгөн оюн: аталышы, автору, суроолор саны + Сессия баштоо + OG теги
 static/
@@ -117,6 +119,7 @@ player_images/               # Окуучулардын аватарлары (Ba
 | `/lobby/{pin}/join` | POST | Оюнга кошулуу → JSON `{player_id}` |
 | `/play/{pin}/{player_id}` | GET | Окуучу оюн экраны |
 | `/result/{player_id}` | GET | Окуучу жыйынтыгы |
+| `/rate/{player_id}` | POST | Оюнду баалоо (JSON `{stars, comment}`) |
 | `/ws/player/{pin}/{player_id}` | WS | Окуучу WebSocket |
 | `/upload/avatar` | POST | Base64 сүрөт жүктөө |
 | `/qr/{pin}` | GET | PNG QR код |
@@ -185,6 +188,7 @@ player_images/               # Окуучулардын аватарлары (Ba
 - `session_answers_snapshot` — жооп вариянттарынын көчүрмөсү
 - `session_players` — nickname, avatar, final_score
 - `player_answers` — selected_answer_text, is_correct, earned_points, time_taken_ms
+- `session_ratings` — session_id, player_id, stars (1–5), comment (VARCHAR 50), UNIQUE(player_id)
 
 ### Миграция
 `db.Migrate()` сервер старттанганда `schema_migrations` таблица аркылуу автоматтык.
@@ -209,6 +213,9 @@ static:  earned = question.static_score (эгер туура болсо)
 | `jsStr $s` | `string → template.JS` (JSON-encoded, XSS-safe) |
 | `jsonQuestions .Questions` | `[]Question → template.JS` (game_builder) |
 | `jsonPlayers .Players .Progress .Scores` | `[]SessionPlayer + maps → template.JS` (monitor) |
+| `starsStr $avg` | `float64 → "★★★☆☆"` (орточо баалоо үчүн) |
+| `starsFromInt $n` | `int → "★★★☆☆"` (жеке баалоо үчүн) |
+| `fmtFloat $f` | `float64 → "4.2"` (1 ондук белги) |
 
 ## i18n
 
@@ -251,3 +258,5 @@ PLAYER_IMAGES_DIR=./player_images
 8. **Onboarding demo** — Жаңы мугалим Google аркылуу биринчи жолу кирсе, `onboarding.SeedDemoGame()` автоматтык 10 суроолуу математика оюнун жаратат. Мугалим дароо пробалап көрө алат.
 
 9. **SEO архитектурасы** — Башкы бет (`/`) гана индекстелет: толук `<meta description>`, Open Graph, Twitter Card, hreflang (ky/ru/en), canonical URL, Schema.org JSON-LD. Башка бардык беттер `<meta name="robots" content="noindex, nofollow">`. `/robots.txt` жана `/sitemap.xml` `static/` папкасынан серверленет. Домен `APP_URL` env'ден (`.env APP_URL`) алынат, болбосо `https://quiz.bilimai.kg` default.
+
+10. **Баалоо системасы** — Оюн бүткөндөн кийин `result_student.html` барагында окуучу 1–5 жылдыз менен оюнду баалай алат + 50 символга чейин комментарий жаза алат. Баалоо `POST /rate/{player_id}` аркылуу JSON форматта жөнөтүлөт. Мугалим `/history/{id}` барагында орточо баалоо жана бардык пикирлерди (аватар, ник, жылдыздар, комментарий) көрөт. Бир оюнчу — бир баалоо (`UNIQUE player_id`), кайталап жазса жаңыртат.

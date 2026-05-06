@@ -91,5 +91,13 @@
   "share_copy": "Copy",
   "share_copied": "Copied!",
   "shared_start_session": "Start Session",
-  "shared_logged_in": "You are logged in"
+  "shared_logged_in": "You are logged in",
+  "rate_game": "Rate this game",
+  "rate_placeholder": "Comment (optional, max 50 chars)",
+  "rate_submit": "Submit",
+  "rate_thanks": "Thanks for your feedback!",
+  "rating": "Rating",
+  "ratings": "Reviews",
+  "avg_rating": "Average rating",
+  "no_ratings": "No reviews yet"
 }

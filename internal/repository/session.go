@@ -202,6 +202,55 @@ func (r *SessionRepo) GetPlayerAnswers(ctx context.Context, playerID int) ([]Pla
 	return answers, rows.Err()
 }
 
+func (r *SessionRepo) GetPlayerByID(ctx context.Context, playerID int) (*SessionPlayer, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT id, session_id, nickname, avatar, final_score, finished_at
+		 FROM session_players WHERE id=$1`, playerID)
+	p := &SessionPlayer{}
+	err := row.Scan(&p.ID, &p.SessionID, &p.Nickname, &p.Avatar, &p.FinalScore, &p.FinishedAt)
+	return p, err
+}
+
+func (r *SessionRepo) SaveRating(ctx context.Context, sessionID, playerID, stars int, comment string) error {
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO session_ratings (session_id, player_id, stars, comment)
+		 VALUES ($1,$2,$3,$4)
+		 ON CONFLICT (player_id) DO UPDATE SET stars=$3, comment=$4`,
+		sessionID, playerID, stars, comment)
+	return err
+}
+
+func (r *SessionRepo) GetRatings(ctx context.Context, sessionID int) ([]SessionRating, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT sr.id, sr.session_id, sr.player_id, sr.stars, COALESCE(sr.comment,''),
+		        sr.created_at, sp.nickname, sp.avatar
+		 FROM session_ratings sr
+		 JOIN session_players sp ON sp.id = sr.player_id
+		 WHERE sr.session_id=$1 ORDER BY sr.created_at DESC`, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ratings []SessionRating
+	for rows.Next() {
+		var rt SessionRating
+		if err := rows.Scan(&rt.ID, &rt.SessionID, &rt.PlayerID, &rt.Stars, &rt.Comment,
+			&rt.CreatedAt, &rt.Nickname, &rt.Avatar); err != nil {
+			return nil, err
+		}
+		ratings = append(ratings, rt)
+	}
+	return ratings, rows.Err()
+}
+
+func (r *SessionRepo) GetRatingStats(ctx context.Context, sessionID int) (RatingStats, error) {
+	var s RatingStats
+	err := r.db.QueryRow(ctx,
+		`SELECT COALESCE(AVG(stars), 0), COUNT(*) FROM session_ratings WHERE session_id=$1`,
+		sessionID).Scan(&s.AvgStars, &s.Count)
+	return s, err
+}
+
 func (r *SessionRepo) GetSnapshotQuestions(ctx context.Context, sessionID int) ([]SnapshotQuestion, error) {
 	rows, err := r.db.Query(ctx,
 		`SELECT id, session_id, original_id, position, content, image_url,

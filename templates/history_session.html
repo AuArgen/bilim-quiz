@@ -135,7 +135,49 @@
     <p class="text-slate-500 font-medium text-sm">Оюнчулар оюнга кошулуп, жооп бергенде жыйынтыктар ушул жерде пайда болот.</p>
   </div>
   {{end}}
-  
+
+  <!-- Ratings Section -->
+  <div class="mt-8 animate-fade-in-up" style="animation-delay: 0.3s">
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="bg-slate-50/80 border-b border-slate-100 px-6 py-5 flex items-center justify-between">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span class="text-xl">⭐</span> {{t $.Lang "ratings"}}
+          {{if gt .RatingCount 0}}
+          <span class="ml-2 text-sm font-normal text-slate-500">
+            {{starsStr .AvgStars}} {{fmtFloat .AvgStars}}
+          </span>
+          {{end}}
+        </h2>
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{.RatingCount}} {{t $.Lang "rating"}}</span>
+      </div>
+
+      {{if .Ratings}}
+      <div class="p-4 space-y-3">
+        {{range .Ratings}}
+        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-100">
+          <div class="w-10 h-10 shrink-0 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-xl shadow-sm">
+            {{.Avatar}}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="font-bold text-slate-800 text-sm truncate">{{.Nickname}}</span>
+              <span class="shrink-0 text-lg text-warning tracking-tight">{{starsFromInt .Stars}}</span>
+            </div>
+            {{if .Comment}}
+            <p class="text-slate-500 text-sm">{{.Comment}}</p>
+            {{end}}
+          </div>
+        </div>
+        {{end}}
+      </div>
+      {{else}}
+      <div class="px-6 py-10 text-center text-slate-400 font-medium text-sm">
+        {{t $.Lang "no_ratings"}}
+      </div>
+      {{end}}
+    </div>
+  </div>
+
   {{end}}
 
 </div>

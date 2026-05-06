@@ -114,40 +114,57 @@ func (h *StudentHandler) PlayPage(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) ResultPage(w http.ResponseWriter, r *http.Request) {
 	playerID, _ := strconv.Atoi(chi.URLParam(r, "player_id"))
 
-	answers, err := h.sessions.GetPlayerAnswers(r.Context(), playerID)
+	player, err := h.sessions.GetPlayerByID(r.Context(), playerID)
 	if err != nil {
-		http.Error(w, "error", http.StatusInternalServerError)
-		return
-	}
-
-	// Get leaderboard to find rank
-	if len(answers) == 0 {
 		Render(w, r, "result_student.html", nil)
 		return
 	}
 
-	sessionID := 0
-	if len(answers) > 0 {
-		// Get player info
-		leaderboard, _ := h.sessions.GetLeaderboard(r.Context(), sessionID)
-		rank := 1
-		var player *repository.SessionPlayer
-		for i, p := range leaderboard {
-			if p.ID == playerID {
-				rank = i + 1
-				pp := p
-				player = &pp
-				break
-			}
+	answers, _ := h.sessions.GetPlayerAnswers(r.Context(), playerID)
+	leaderboard, _ := h.sessions.GetLeaderboard(r.Context(), player.SessionID)
+
+	rank := 1
+	for i, p := range leaderboard {
+		if p.ID == playerID {
+			rank = i + 1
+			break
 		}
-		Render(w, r, "result_student.html", ResultStudentData{
-			Player:       player,
-			Rank:         rank,
-			TotalPlayers: len(leaderboard),
-			Answers:      answers,
-		})
+	}
+
+	Render(w, r, "result_student.html", ResultStudentData{
+		Player:       player,
+		Rank:         rank,
+		TotalPlayers: len(leaderboard),
+		Answers:      answers,
+	})
+}
+
+func (h *StudentHandler) RateSession(w http.ResponseWriter, r *http.Request) {
+	playerID, _ := strconv.Atoi(chi.URLParam(r, "player_id"))
+
+	var body struct {
+		Stars   int    `json:"stars"`
+		Comment string `json:"comment"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Stars < 1 || body.Stars > 5 {
+		http.Error(w, "invalid", http.StatusBadRequest)
+		return
+	}
+	runes := []rune(body.Comment)
+	if len(runes) > 50 {
+		body.Comment = string(runes[:50])
+	}
+
+	player, err := h.sessions.GetPlayerByID(r.Context(), playerID)
+	if err != nil {
+		http.Error(w, "player not found", http.StatusNotFound)
 		return
 	}
 
-	Render(w, r, "result_student.html", nil)
+	if err := h.sessions.SaveRating(r.Context(), player.SessionID, playerID, body.Stars, body.Comment); err != nil {
+		http.Error(w, "error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

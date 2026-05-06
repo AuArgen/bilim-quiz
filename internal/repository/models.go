@@ -107,3 +107,19 @@ type TeacherStats struct {
 	TotalSessions int
 	TotalPlayers  int
 }
+
+type SessionRating struct {
+	ID        int
+	SessionID int
+	PlayerID  int
+	Stars     int
+	Comment   string
+	Nickname  string
+	Avatar    string
+	CreatedAt time.Time
+}
+
+type RatingStats struct {
+	AvgStars float64
+	Count    int
+}

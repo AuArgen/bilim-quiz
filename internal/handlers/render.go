@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -113,6 +114,30 @@ func LoadTemplates(dir string) error {
 			b, _ := json.Marshal(s)
 			return template.JS(b)
 		},
+		"starsStr": func(avg float64) string {
+			n := int(math.Round(avg))
+			s := ""
+			for i := 0; i < 5; i++ {
+				if i < n {
+					s += "★"
+				} else {
+					s += "☆"
+				}
+			}
+			return s
+		},
+		"starsFromInt": func(n int) string {
+			s := ""
+			for i := 0; i < 5; i++ {
+				if i < n {
+					s += "★"
+				} else {
+					s += "☆"
+				}
+			}
+			return s
+		},
+		"fmtFloat": func(f float64) string { return fmt.Sprintf("%.1f", f) },
 	}
 
 	pattern := filepath.Join(dir, "*.html")

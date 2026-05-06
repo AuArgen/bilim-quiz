@@ -98,6 +98,7 @@ func main() {
 	r.Post("/lobby/{pin}/join", studentH.JoinLobby)
 	r.Get("/play/{pin}/{player_id}", studentH.PlayPage)
 	r.Get("/result/{player_id}", studentH.ResultPage)
+	r.Post("/rate/{player_id}", studentH.RateSession)
 
 	// Public routes
 	r.Get("/", authH.LoginPage)

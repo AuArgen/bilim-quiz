@@ -26,9 +26,12 @@ type HistoryListData struct {
 }
 
 type HistorySessionData struct {
-	Session  *repository.GameSession
-	Game     *repository.Game
-	Players  []repository.SessionPlayer
+	Session     *repository.GameSession
+	Game        *repository.Game
+	Players     []repository.SessionPlayer
+	Ratings     []repository.SessionRating
+	AvgStars    float64
+	RatingCount int
 }
 
 type HistoryPlayerData struct {
@@ -72,9 +75,16 @@ func (h *HistoryHandler) SessionDetail(w http.ResponseWriter, r *http.Request) {
 
 	g, _ := h.games.GetByID(r.Context(), sess.GameID)
 	players, _ := h.sessions.GetLeaderboard(r.Context(), sessionID)
+	ratings, _ := h.sessions.GetRatings(r.Context(), sessionID)
+	stats, _ := h.sessions.GetRatingStats(r.Context(), sessionID)
 
 	Render(w, r, "history_session.html", HistorySessionData{
-		Session: sess, Game: g, Players: players,
+		Session:     sess,
+		Game:        g,
+		Players:     players,
+		Ratings:     ratings,
+		AvgStars:    stats.AvgStars,
+		RatingCount: stats.Count,
 	})
 }
 
