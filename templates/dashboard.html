@@ -15,7 +15,9 @@
 <body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/20">
 
   <!-- Sidebar + Main layout -->
-  <div class="flex min-h-screen" x-data="{sidebarOpen: false}">
+  <div class="flex min-h-screen" x-data="{sidebarOpen: false}"
+       x-effect="document.body.classList.toggle('overflow-hidden', sidebarOpen && window.innerWidth < 1024)"
+       @keydown.escape.window="sidebarOpen=false">
 
     <!-- Mobile overlay -->
     <div x-show="sidebarOpen" @click="sidebarOpen=false"
@@ -29,25 +31,25 @@
          style="display:none"></div>
 
     <!-- Sidebar -->
-    <aside class="fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 flex flex-col py-8 px-5 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-30 transition-transform duration-300 animate-fade-in-up overflow-y-auto relative"
-           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+    <aside class="fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 flex flex-col py-8 px-5 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-30 transition-transform duration-300 animate-fade-in-up overflow-y-auto"
+           :class="sidebarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto lg:translate-x-0'">
       <!-- Close button (mobile only) -->
-      <button @click="sidebarOpen=false" class="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors text-sm font-bold">✕</button>
+      <button type="button" @click="sidebarOpen=false" aria-label="Close menu" class="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors text-sm font-bold">✕</button>
 
       <!-- Башкы бетке шилтеме -->
-      <a href="/" class="flex items-center gap-3 mb-10 px-2 group cursor-pointer decoration-transparent" title="Башкы бетке кайтуу">
+      <a href="/" @click="sidebarOpen=false" class="flex items-center gap-3 mb-10 px-2 group cursor-pointer decoration-transparent" title="Башкы бетке кайтуу">
         <div class="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-xl shadow-inner group-hover:scale-105 group-hover:bg-primary/20 transition-all duration-300">🦉</div>
         <span class="text-2xl font-black text-slate-800 tracking-tight group-hover:text-primary transition-colors">{{appName}}</span>
       </a>
 
       <nav class="flex flex-col gap-2.5 flex-1">
-        <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-info/10 text-info hover:bg-info hover:text-white shadow-sm transition-all duration-300 font-medium">
+        <a href="/dashboard" @click="sidebarOpen=false" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-info/10 text-info hover:bg-info hover:text-white shadow-sm transition-all duration-300 font-medium">
           <span class="text-xl">🏠</span> {{t .Lang "dashboard"}}
         </a>
-        <a href="/games/new" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-white shadow-sm transition-all duration-300 font-medium">
+        <a href="/games/new" @click="sidebarOpen=false" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-white shadow-sm transition-all duration-300 font-medium">
           <span class="text-xl">🚀</span> {{t .Lang "create_game"}}
         </a>
-        <a href="/history" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white shadow-sm transition-all duration-300 font-medium">
+        <a href="/history" @click="sidebarOpen=false" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white shadow-sm transition-all duration-300 font-medium">
           <span class="text-xl">📋</span> {{t .Lang "history"}}
         </a>
       </nav>
@@ -66,11 +68,11 @@
 
         <!-- Lang switcher -->
         <div class="flex gap-1 mb-4 bg-slate-100 p-1 rounded-lg">
-          <a href="/lang/ky" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "ky"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">KY</a>
-          <a href="/lang/ru" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "ru"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">RU</a>
-          <a href="/lang/en" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "en"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">EN</a>
+          <a href="/lang/ky" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "ky"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">KY</a>
+          <a href="/lang/ru" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "ru"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">RU</a>
+          <a href="/lang/en" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "en"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">EN</a>
         </div>
-        <a href="/logout" class="flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-red-500 transition-colors font-semibold py-2">
+        <a href="/logout" @click="sidebarOpen=false" class="flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-red-500 transition-colors font-semibold py-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           {{t .Lang "logout"}}
         </a>
@@ -82,7 +84,7 @@
 
       <!-- Mobile top bar -->
       <div class="lg:hidden flex items-center justify-between mb-6 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
-        <button @click="sidebarOpen=true" class="flex items-center justify-center w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-600 font-bold text-lg">☰</button>
+        <button type="button" @click="sidebarOpen=true" aria-label="Open menu" class="flex items-center justify-center w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-600 font-bold text-lg">☰</button>
         <a href="/" class="flex items-center gap-2 decoration-transparent">
           <div class="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-base">🦉</div>
           <span class="text-lg font-black text-slate-800">{{appName}}</span>
