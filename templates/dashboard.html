@@ -11,6 +11,23 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/static/css/app.css"/>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+  <style>
+    .dashboard-sidebar {
+      transform: translateX(-100%);
+      transition: transform 300ms ease;
+      pointer-events: none;
+    }
+    .dashboard-sidebar.dashboard-sidebar-open {
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    @media (min-width: 1024px) {
+      .dashboard-sidebar {
+        transform: translateX(0);
+        pointer-events: auto;
+      }
+    }
+  </style>
 </head>
 <body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/20">
 
