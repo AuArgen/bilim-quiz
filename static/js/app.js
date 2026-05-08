@@ -14,7 +14,7 @@ function langModal() {
   };
 }
 
-// Avatar upload via Canvas API (compress to 120x120, ~1KB)
+// Avatar upload via Canvas API (compress to 120x120, ~2KB)
 function compressAndUpload(file, callback) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -31,10 +31,10 @@ function compressAndUpload(file, callback) {
       const sy = (img.height - size) / 2;
       ctx.drawImage(img, sx, sy, size, size, 0, 0, 120, 120);
 
-      // compress: try quality from 0.7 down until ~1KB
-      let quality = 0.7;
+      // compress: try quality from 0.85 down until ~2KB
+      let quality = 0.85;
       let dataURI = canvas.toDataURL('image/jpeg', quality);
-      while (dataURI.length > 1400 && quality > 0.1) {
+      while (dataURI.length > 2800 && quality > 0.1) {
         quality -= 0.1;
         dataURI = canvas.toDataURL('image/jpeg', quality);
       }
