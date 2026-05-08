@@ -95,8 +95,9 @@
           </div>
           
           <!-- Avatar -->
-          <div class="w-12 h-12 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-2xl shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-            {{$p.Avatar}}
+          <div class="w-12 h-12 rounded-full overflow-hidden bg-white border-2 border-slate-100 flex items-center justify-center text-2xl shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+            {{if isImgPath $p.Avatar}}<img src="{{$p.Avatar}}" class="w-full h-full object-cover" alt="{{$p.Nickname}}"/>
+            {{else}}{{if $p.Avatar}}{{$p.Avatar}}{{else}}🐶{{end}}{{end}}
           </div>
           
           <!-- Player Info -->
@@ -155,8 +156,9 @@
       <div class="p-4 space-y-3">
         {{range .Ratings}}
         <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-100">
-          <div class="w-10 h-10 shrink-0 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-xl shadow-sm">
-            {{.Avatar}}
+          <div class="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-white border-2 border-slate-100 flex items-center justify-center text-xl shadow-sm">
+            {{if isImgPath .Avatar}}<img src="{{.Avatar}}" class="w-full h-full object-cover" alt="{{.Nickname}}"/>
+            {{else}}{{if .Avatar}}{{.Avatar}}{{else}}🐶{{end}}{{end}}
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2 mb-1">
