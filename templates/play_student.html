@@ -97,7 +97,7 @@
       </div>
 
       <!-- Score feedback (Overlay) -->
-      <div x-show="answered" x-transition.scale.duration.300ms class="w-full bg-white/95 backdrop-blur-md rounded-[2rem] p-6 text-center shadow-2xl border border-slate-100 mb-6 flex flex-col items-center justify-center">
+      <div x-show="resultReceived" x-transition.scale.duration.300ms class="w-full bg-white/95 backdrop-blur-md rounded-[2rem] p-6 text-center shadow-2xl border border-slate-100 mb-6 flex flex-col items-center justify-center">
         <template x-if="earnedPoints > 0">
           <div class="flex flex-col items-center animate-bounce-short">
             <div class="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center text-4xl mb-2">✨</div>
@@ -105,7 +105,7 @@
             <div class="text-xs font-bold text-success uppercase tracking-widest mt-1">Упай кошулду</div>
           </div>
         </template>
-        <template x-if="earnedPoints === 0 && answered">
+        <template x-if="earnedPoints === 0 && resultReceived">
           <div class="flex flex-col items-center">
             <div class="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center text-4xl mb-2">❌</div>
             <div class="text-xl font-bold text-slate-600 mt-2">Ката же кеч!</div>
@@ -125,11 +125,13 @@
             @click="submitAnswer(ans.text)"
             :disabled="answered"
             :class="{
-              /* States when answered */
-              'opacity-40 scale-95': answered && selectedAnswer !== ans.text && !ans.is_correct,
-              'bg-success border-success text-white ring-4 ring-success/30 shadow-lg shadow-success/30 scale-[1.02] z-10': answered && ans.is_correct,
-              'bg-accent border-accent text-white ring-4 ring-accent/30': answered && !ans.is_correct && selectedAnswer === ans.text,
-              
+              /* States when result received from server */
+              'opacity-40 scale-95': resultReceived && selectedAnswer !== ans.text && !ans.is_correct,
+              'bg-success border-success text-white ring-4 ring-success/30 shadow-lg shadow-success/30 scale-[1.02] z-10': resultReceived && ans.is_correct,
+              'bg-accent border-accent text-white ring-4 ring-accent/30': resultReceived && !ans.is_correct && selectedAnswer === ans.text,
+              /* Selected but waiting for server */
+              'bg-primary/10 border-primary text-primary ring-4 ring-primary/20': answered && !resultReceived && selectedAnswer === ans.text,
+
               /* Default states */
               'bg-white text-slate-700 hover:bg-slate-50 hover:border-primary/50 hover:shadow-md active:scale-95': !answered,
               
@@ -148,8 +150,8 @@
             <span class="relative z-10 break-words w-full pl-2" x-text="ans.text"></span>
             
             <!-- Result Icons -->
-            <div x-show="answered && ans.is_correct" class="absolute right-4 text-3xl opacity-90 animate-bounce">✓</div>
-            <div x-show="answered && !ans.is_correct && selectedAnswer === ans.text" class="absolute right-4 text-2xl opacity-90">✕</div>
+            <div x-show="resultReceived && ans.is_correct" class="absolute right-4 text-3xl opacity-90 animate-bounce">✓</div>
+            <div x-show="resultReceived && !ans.is_correct && selectedAnswer === ans.text" class="absolute right-4 text-2xl opacity-90">✕</div>
           </button>
         </template>
       </div>
@@ -242,6 +244,7 @@ function playStudent(pin, playerId, lang) {
     timeTotal: 30,
     timer: null,
     answered: false,
+    resultReceived: false,
     selectedAnswer: '',
     earnedPoints: 0,
     totalScore: 0,
@@ -265,6 +268,7 @@ function playStudent(pin, playerId, lang) {
         this.timeLeft = msg.question.time_limit || 30;
         this.timeTotal = this.timeLeft;
         this.answered = false;
+        this.resultReceived = false;
         this.selectedAnswer = '';
         this.earnedPoints = 0;
         this.startMs = Date.now();
@@ -278,6 +282,7 @@ function playStudent(pin, playerId, lang) {
         this.startTimer();
       }
       if (msg.type === 'answer_result') {
+        this.resultReceived = true;
         this.earnedPoints = msg.earned_points;
         this.totalScore = msg.total_score;
         // Reveal is_correct on shuffled order (match by text)
