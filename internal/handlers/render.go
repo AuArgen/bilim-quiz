@@ -137,7 +137,8 @@ func LoadTemplates(dir string) error {
 			}
 			return s
 		},
-		"fmtFloat": func(f float64) string { return fmt.Sprintf("%.1f", f) },
+		"fmtFloat":  func(f float64) string { return fmt.Sprintf("%.1f", f) },
+		"isImgPath": func(s string) bool { return len(s) > 0 && s[0] == '/' },
 	}
 
 	pattern := filepath.Join(dir, "*.html")

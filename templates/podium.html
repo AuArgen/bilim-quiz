@@ -10,267 +10,357 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/static/css/app.css"/>
-  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
-  <style>
-    /* Podium appearance animation */
-    @keyframes popIn { 
-      from { transform: scale(0.5) translateY(100px); opacity: 0; } 
-      to { transform: scale(1) translateY(0); opacity: 1; } 
-    }
-    .pop-in { animation: popIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-    
-    /* Hover floating animation */
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    .animate-float { animation: float 3s ease-in-out infinite; }
-    
-    /* Subtle background falling confetti */
-    .bg-confetti {
-      background-image: radial-gradient(#FBBF24 20%, transparent 20%),
-                        radial-gradient(#F472B6 20%, transparent 20%),
-                        radial-gradient(#60A5FA 20%, transparent 20%);
-      background-color: transparent;
-      background-position: 0 0, 20px 20px, 40px 10px;
-      background-size: 60px 60px;
-      opacity: 0.1;
-      animation: fall 15s linear infinite;
-    }
-    @keyframes fall {
-      from { background-position: 0 0, 20px 20px, 40px 10px; }
-      to { background-position: 0 600px, 20px 620px, 40px 610px; }
-    }
-
-    /* Fireworks / Exploding Confetti CSS */
-    .firework {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      animation: explode 1s ease-out forwards;
-      opacity: 0;
-    }
-    @keyframes explode {
-      0% { transform: scale(0) translate(0, 0); opacity: 1; }
-      100% { transform: scale(1) translate(var(--tx), var(--ty)); opacity: 0; }
-    }
-  </style>
+  <script src="/static/js/app.js"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']}}}}</script>
 </head>
-<body class="bg-cream text-slate-800 min-h-screen flex flex-col items-center justify-start px-4 py-10 font-sans selection:bg-primary/20 relative overflow-x-hidden"
+<body class="min-h-screen flex flex-col font-sans relative overflow-hidden"
+      style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);"
       x-data="podiumPage()">
 
-  <!-- Background Ambience -->
-  <div class="fixed inset-0 z-0 pointer-events-none">
-    <div class="absolute inset-0 bg-confetti"></div>
-    <div class="absolute top-0 left-1/4 w-[40vw] h-[40vw] bg-warning/20 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
-    <div class="absolute bottom-0 right-1/4 w-[40vw] h-[40vw] bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
-    
-    <!-- Fireworks Container -->
-    <div id="fireworks-container" class="absolute inset-0 z-50 pointer-events-none overflow-hidden"></div>
+  <!-- BGM -->
+  <audio id="bgm" loop preload="auto">
+    <source src="/static/audio/lobby.mp3" type="audio/mpeg"/>
+  </audio>
+
+  <!-- Background: stars + glow + confetti -->
+  <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="stars-layer"></div>
+    <div class="absolute top-0 left-0 w-1/2 h-1/2 rounded-full opacity-20 blur-[100px]"
+         style="background: radial-gradient(circle, #7c3aed, transparent 70%)"></div>
+    <div class="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full opacity-15 blur-[100px]"
+         style="background: radial-gradient(circle, #db2777, transparent 70%)"></div>
+    <div id="confetti-container" class="absolute inset-0 overflow-hidden z-10 pointer-events-none"></div>
   </div>
 
-  <div class="relative z-10 w-full flex flex-col items-center max-w-3xl mx-auto">
-    
-    <!-- Header -->
-    <div class="text-center mb-12 animate-fade-in-up">
-      <div class="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center text-6xl shadow-xl shadow-warning/20 border-4 border-white mb-4 animate-bounce" style="animation-duration: 2s;">🏆</div>
-      <h1 class="text-4xl md:text-5xl font-black mb-3 text-slate-800 tracking-tight">{{t .Lang "final_results"}}</h1>
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full border border-slate-200 shadow-sm hover:scale-105 transition-transform">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">PIN</span>
-        <span class="font-mono font-black text-primary text-lg">{{with .Data}}{{with .Session}}{{.PinCode}}{{end}}{{end}}</span>
+  <!-- Header -->
+  <div class="relative z-20 px-6 py-4 flex items-center justify-between border-b shrink-0"
+       style="background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border-color: rgba(255,255,255,0.08);">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border"
+           style="background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.25);">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+        </span>
+        <span class="text-xs font-black tracking-widest uppercase text-red-400">Live</span>
       </div>
+      <h1 class="font-black text-2xl text-white tracking-tight flex items-center gap-2">
+        🏆 {{t .Lang "final_results"}}
+      </h1>
     </div>
 
-    {{with .Data}}{{with .Players}}
+    <div class="flex items-center gap-4">
+      <!-- Music toggle -->
+      <button @click="toggleMusic()"
+              class="flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-300 hover:scale-105"
+              :style="musicPlaying
+                ? 'background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.4);'
+                : 'background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);'">
+        <span class="text-xl" x-text="musicPlaying ? '🔊' : '🔇'"></span>
+        <span class="text-xs font-black uppercase tracking-wider"
+              :style="musicPlaying ? 'color:#a78bfa' : 'color:rgba(255,255,255,0.3)'">BGM</span>
+        <div x-show="musicPlaying" class="flex items-end gap-0.5 h-4">
+          <div class="w-1 rounded-full bg-purple-400 eq-bar" style="animation-delay:0s"></div>
+          <div class="w-1 rounded-full bg-purple-400 eq-bar" style="animation-delay:0.2s"></div>
+          <div class="w-1 rounded-full bg-purple-400 eq-bar" style="animation-delay:0.4s"></div>
+        </div>
+      </button>
 
-    <!-- Top 3 Podium -->
-    {{if ge (len .) 1}}
-    <div class="flex items-end justify-center gap-2 sm:gap-6 mb-16 w-full px-2">
-
-      <!-- 2nd place (Silver) -->
-      {{if ge (len .) 2}}
-      {{$p := index . 1}}
-      <div class="flex flex-col items-center pop-in relative z-10 w-24 sm:w-32" style="animation-delay:.2s">
-        <div class="animate-float" style="animation-delay: .5s">
-          <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center text-4xl sm:text-5xl mb-2 shadow-lg border-4 border-slate-200 mx-auto overflow-hidden">
-            {{$p.Avatar}}
-          </div>
-          <div class="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow-sm border border-slate-100 mb-1 text-center">
-            <div class="font-bold text-sm text-slate-800 truncate max-w-full">{{$p.Nickname}}</div>
-            <div class="text-xs font-black text-slate-500">{{$p.FinalScore}} <span class="text-[10px]">pts</span></div>
-          </div>
-        </div>
-        <!-- Pedestal -->
-        <div class="w-full bg-gradient-to-t from-slate-300 to-slate-100 rounded-t-2xl flex items-start justify-center h-28 sm:h-36 shadow-[0_0_30px_rgba(148,163,184,0.3)] border-t-4 border-white relative overflow-hidden group">
-          <div class="absolute inset-0 bg-white/20 w-full h-full transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-          <span class="text-5xl font-black text-slate-400 mt-4 opacity-50 drop-shadow-sm">2</span>
-        </div>
-      </div>
-      {{end}}
-
-      <!-- 1st place (Gold) -->
-      {{$p := index . 0}}
-      <div class="flex flex-col items-center pop-in relative z-20 w-28 sm:w-40" style="animation-delay:0s">
-        <div class="absolute -top-12 text-6xl animate-bounce drop-shadow-lg z-20">👑</div>
-        <div class="animate-float z-10">
-          <div class="w-20 h-20 sm:w-28 sm:h-28 bg-white rounded-full flex items-center justify-center text-5xl sm:text-7xl mb-2 shadow-2xl shadow-warning/40 border-4 border-yellow-400 mx-auto overflow-hidden ring-4 ring-white">
-            {{$p.Avatar}}
-          </div>
-          <div class="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-lg border border-yellow-200 mb-2 text-center transform scale-110">
-            <div class="font-black text-base sm:text-lg text-slate-800 truncate max-w-[120px] mx-auto">{{$p.Nickname}}</div>
-            <div class="text-sm font-black text-yellow-500">{{$p.FinalScore}} <span class="text-[10px] text-yellow-600/70">pts</span></div>
-          </div>
-        </div>
-        <!-- Pedestal -->
-        <div class="w-full bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-3xl flex items-start justify-center h-40 sm:h-48 shadow-[0_0_40px_rgba(234,179,8,0.4)] border-t-4 border-white relative overflow-hidden group">
-          <div class="absolute inset-0 bg-white/30 w-full h-full transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-          <span class="text-6xl sm:text-7xl font-black text-yellow-600 mt-4 opacity-70 drop-shadow-sm">1</span>
-        </div>
+      <div class="flex items-center gap-2 px-4 py-2 rounded-xl border"
+           style="background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1);">
+        <span class="text-xl">👥</span>
+        <span class="text-sm font-bold uppercase tracking-wider" style="color: rgba(255,255,255,0.5);">{{t .Lang "players_joined"}}:</span>
+        <strong class="text-xl font-black ml-1" style="color: #a78bfa;">{{with .Data}}{{.Session.TotalPlayers}}{{end}}</strong>
       </div>
 
-      <!-- 3rd place (Bronze) -->
-      {{if ge (len .) 3}}
-      {{$p := index . 2}}
-      <div class="flex flex-col items-center pop-in relative z-0 w-24 sm:w-32" style="animation-delay:.4s">
-        <div class="animate-float" style="animation-delay: 1s">
-          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-2 shadow-lg border-4 border-amber-600/30 mx-auto overflow-hidden">
-            {{$p.Avatar}}
+      <a href="/dashboard"
+         class="text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2"
+         style="background: linear-gradient(135deg, #7c3aed, #db2777); box-shadow: 0 4px 20px rgba(124,58,237,0.4);">
+        🏠 {{t .Lang "dashboard"}} →
+      </a>
+    </div>
+  </div>
+
+  <!-- Main: podium (left) + rankings sidebar (right) -->
+  <div class="flex flex-1 overflow-hidden relative z-10 p-4 gap-4">
+
+    <!-- Left: Podium -->
+    <div class="flex-1 rounded-3xl flex flex-col p-6 relative overflow-hidden border"
+         style="background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.07);">
+
+      <!-- Title -->
+      <div class="text-center mb-6 shrink-0">
+        <h2 class="text-4xl font-black text-white mb-1">🏆 {{t .Lang "game_over"}}</h2>
+        <p class="text-sm font-semibold" style="color: rgba(255,255,255,0.5);">{{t .Lang "all_played_well"}}</p>
+      </div>
+
+      {{$lang := .Lang}}
+      {{with .Data}}
+
+      <!-- Podium pedestals -->
+      <div class="flex items-end justify-center gap-8 flex-1 min-h-0 pb-2">
+
+        <!-- 2nd place -->
+        {{if ge (len .Players) 2}}
+        {{$p := index .Players 1}}
+        <div class="flex flex-col items-center pop-in" style="animation-delay:.3s">
+          <div class="text-3xl mb-2" style="filter: drop-shadow(0 0 8px rgba(148,163,184,0.6));">👑</div>
+          <div class="w-24 h-24 rounded-full overflow-hidden border-4 mb-3"
+               style="border-color: #94a3b8; box-shadow: 0 0 30px rgba(148,163,184,0.4), 0 8px 20px rgba(0,0,0,0.5);">
+            {{if isImgPath $p.Avatar}}
+            <img src="{{$p.Avatar}}" class="w-full h-full object-cover" alt="{{$p.Nickname}}"/>
+            {{else}}
+            <div class="w-full h-full flex items-center justify-center text-4xl"
+                 style="background: rgba(148,163,184,0.2);">{{if $p.Avatar}}{{$p.Avatar}}{{else}}🐶{{end}}</div>
+            {{end}}
           </div>
-          <div class="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow-sm border border-slate-100 mb-1 text-center">
-            <div class="font-bold text-sm text-slate-800 truncate max-w-full">{{$p.Nickname}}</div>
-            <div class="text-xs font-black text-amber-600">{{$p.FinalScore}} <span class="text-[10px]">pts</span></div>
+          <div class="px-3 py-1 rounded-xl mb-3 text-sm font-black"
+               style="background: rgba(148,163,184,0.15); color: #cbd5e1;">★ {{$p.FinalScore}} pts</div>
+          <div class="w-36 rounded-t-2xl flex items-start justify-center pt-3 h-32 border-t-2"
+               style="background: linear-gradient(to top, #334155, #94a3b8); border-color: rgba(255,255,255,0.25); box-shadow: 0 -4px 20px rgba(148,163,184,0.2), inset 0 1px 0 rgba(255,255,255,0.15);">
+            <span class="text-5xl font-black opacity-40" style="color: #0f172a;">2</span>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-black text-white text-base">{{$p.Nickname}}</div>
+            <div class="text-xs mt-1 font-semibold" style="color: rgba(203,213,225,0.55);">Мыктый ойчулук!</div>
           </div>
         </div>
-        <!-- Pedestal -->
-        <div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t-2xl flex items-start justify-center h-20 sm:h-28 shadow-[0_0_30px_rgba(217,119,6,0.3)] border-t-4 border-white relative overflow-hidden group">
-          <div class="absolute inset-0 bg-white/20 w-full h-full transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-          <span class="text-4xl font-black text-amber-800 mt-3 opacity-40 drop-shadow-sm">3</span>
+        {{end}}
+
+        <!-- 1st place -->
+        {{$p1 := index .Players 0}}
+        <div class="flex flex-col items-center pop-in" style="animation-delay:0s">
+          <div class="text-4xl mb-2 animate-bounce"
+               style="filter: drop-shadow(0 0 12px rgba(251,191,36,0.8)); animation-duration: 2s;">👑</div>
+          <div class="w-32 h-32 rounded-full overflow-hidden border-4 mb-3"
+               style="border-color: #fbbf24; box-shadow: 0 0 50px rgba(251,191,36,0.55), 0 8px 24px rgba(0,0,0,0.5);">
+            {{if isImgPath $p1.Avatar}}
+            <img src="{{$p1.Avatar}}" class="w-full h-full object-cover" alt="{{$p1.Nickname}}"/>
+            {{else}}
+            <div class="w-full h-full flex items-center justify-center text-5xl"
+                 style="background: rgba(251,191,36,0.2);">{{if $p1.Avatar}}{{$p1.Avatar}}{{else}}🐶{{end}}</div>
+            {{end}}
+          </div>
+          <div class="px-4 py-1.5 rounded-xl mb-3 text-base font-black"
+               style="background: rgba(251,191,36,0.2); color: #fbbf24;">★ {{$p1.FinalScore}} pts</div>
+          <div class="w-44 rounded-t-3xl flex items-start justify-center pt-4 h-44 border-t-4"
+               style="background: linear-gradient(to top, #92400e, #f59e0b); border-color: rgba(255,255,255,0.35); box-shadow: 0 -8px 40px rgba(251,191,36,0.35), inset 0 1px 0 rgba(255,255,255,0.2);">
+            <span class="text-7xl font-black opacity-50" style="color: #451a03;">1</span>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-black text-xl" style="color: #fbbf24;">{{$p1.Nickname}}</div>
+            <div class="text-sm mt-1 font-semibold" style="color: rgba(251,191,36,0.65);">Чыныгы чемпион! 🏆</div>
+          </div>
+        </div>
+
+        <!-- 3rd place -->
+        {{if ge (len .Players) 3}}
+        {{$p := index .Players 2}}
+        <div class="flex flex-col items-center pop-in" style="animation-delay:.5s">
+          <div class="text-3xl mb-2" style="filter: drop-shadow(0 0 8px rgba(217,119,6,0.6));">👑</div>
+          <div class="w-20 h-20 rounded-full overflow-hidden border-4 mb-3"
+               style="border-color: #d97706; box-shadow: 0 0 25px rgba(217,119,6,0.4), 0 8px 20px rgba(0,0,0,0.5);">
+            {{if isImgPath $p.Avatar}}
+            <img src="{{$p.Avatar}}" class="w-full h-full object-cover" alt="{{$p.Nickname}}"/>
+            {{else}}
+            <div class="w-full h-full flex items-center justify-center text-3xl"
+                 style="background: rgba(180,83,9,0.2);">{{if $p.Avatar}}{{$p.Avatar}}{{else}}🐶{{end}}</div>
+            {{end}}
+          </div>
+          <div class="px-3 py-1 rounded-xl mb-3 text-sm font-black"
+               style="background: rgba(180,83,9,0.15); color: #fb923c;">★ {{$p.FinalScore}} pts</div>
+          <div class="w-32 rounded-t-2xl flex items-start justify-center pt-3 h-24 border-t-2"
+               style="background: linear-gradient(to top, #7c2d12, #c2410c); border-color: rgba(255,255,255,0.2); box-shadow: 0 -4px 20px rgba(180,83,9,0.2), inset 0 1px 0 rgba(255,255,255,0.1);">
+            <span class="text-4xl font-black opacity-40" style="color: #1c0a00;">3</span>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-black text-white text-base">{{$p.Nickname}}</div>
+            <div class="text-xs mt-1 font-semibold" style="color: rgba(251,146,60,0.55);">Жакшы аракет!</div>
+          </div>
+        </div>
+        {{end}}
+
+      </div>
+
+      <!-- Stats bar -->
+      <div class="shrink-0 pt-4 mt-2 border-t grid grid-cols-4 gap-3"
+           style="border-color: rgba(255,255,255,0.08);">
+        <div class="flex flex-col items-center gap-1 py-3 px-2 rounded-2xl border"
+             style="background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.15);">
+          <span class="text-2xl">👥</span>
+          <span class="text-xl font-black text-white">{{.Session.TotalPlayers}}</span>
+          <span class="text-xs text-center" style="color: rgba(255,255,255,0.4);">{{t $lang "players_joined"}}</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 py-3 px-2 rounded-2xl border"
+             style="background: rgba(52,211,153,0.08); border-color: rgba(52,211,153,0.15);">
+          <span class="text-2xl">✅</span>
+          <span class="text-xl font-black text-white">{{len .Questions}}/{{len .Questions}}</span>
+          <span class="text-xs text-center" style="color: rgba(255,255,255,0.4);">{{t $lang "questions"}}</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 py-3 px-2 rounded-2xl border"
+             style="background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.15);">
+          <span class="text-2xl">⚡</span>
+          <span class="text-xl font-black text-white">—</span>
+          <span class="text-xs text-center" style="color: rgba(255,255,255,0.4);">Тууралык</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 py-3 px-2 rounded-2xl border"
+             style="background: rgba(244,114,182,0.08); border-color: rgba(244,114,182,0.15);">
+          <span class="text-2xl">⏱</span>
+          <span class="text-xl font-black text-white">{{if .DurationStr}}{{.DurationStr}}{{else}}—{{end}}</span>
+          <span class="text-xs text-center" style="color: rgba(255,255,255,0.4);">Убакыт</span>
         </div>
       </div>
+
       {{end}}
     </div>
-    {{end}}
 
-    <!-- Rest of players (4th+) -->
-    {{if gt (len .) 3}}
-    <div class="w-full bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-xl p-2 sm:p-4 mb-8 animate-fade-in-up" style="animation-delay: 0.6s">
-      <div class="px-4 py-3 border-b border-slate-100/50 mb-2">
-        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest text-center">Калган оюнчулар</h3>
+    <!-- Right sidebar: Full rankings -->
+    <div class="w-80 flex flex-col overflow-hidden rounded-3xl border"
+         style="background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); border-color: rgba(255,255,255,0.08);">
+      <div class="px-6 py-5 border-b flex items-center gap-3 shrink-0"
+           style="border-color: rgba(255,255,255,0.07);">
+        <span class="text-2xl">🏆</span>
+        <h3 class="text-lg font-black text-white">{{t .Lang "leaderboard"}}</h3>
       </div>
-      <div class="flex flex-col gap-2">
-        {{range $i, $p := .}}
-        {{if ge $i 3}}
-        <div class="flex items-center gap-4 p-3 bg-slate-50/50 hover:bg-slate-100 rounded-xl transition-all hover:scale-[1.01] border border-transparent hover:border-slate-200">
-          <div class="w-8 shrink-0 flex justify-center">
-            <span class="bg-slate-200 text-slate-500 text-xs font-black px-2 py-1 rounded-lg shadow-inner">{{inc $i}}</span>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        {{with .Data}}{{range $i, $p := .Players}}
+        <div class="flex items-center gap-3 p-3 rounded-2xl border transition-all"
+             style="{{if eq $i 0}}background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.2);{{else if eq $i 1}}background:rgba(203,213,225,0.08);border-color:rgba(203,213,225,0.15);{{else if eq $i 2}}background:rgba(180,83,9,0.08);border-color:rgba(180,83,9,0.15);{{else}}background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.04);{{end}}">
+          <!-- Rank -->
+          <div class="w-8 flex justify-center shrink-0">
+            {{if eq $i 0}}<span class="text-xl">🥇</span>
+            {{else if eq $i 1}}<span class="text-xl">🥈</span>
+            {{else if eq $i 2}}<span class="text-xl">🥉</span>
+            {{else}}<span class="text-xs font-black px-2 py-1 rounded-md"
+                         style="color:rgba(255,255,255,0.35);background:rgba(255,255,255,0.06);">{{inc $i}}</span>{{end}}
           </div>
-          <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm border border-slate-100 shrink-0 overflow-hidden">
-            {{$p.Avatar}}
+          <!-- Avatar -->
+          <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border flex items-center justify-center"
+               style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12);">
+            {{if isImgPath $p.Avatar}}
+            <img src="{{$p.Avatar}}" class="w-full h-full object-cover" alt="{{$p.Nickname}}"/>
+            {{else}}<span class="text-lg">{{if $p.Avatar}}{{$p.Avatar}}{{else}}🐶{{end}}</span>{{end}}
           </div>
+          <!-- Name -->
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-slate-700 truncate text-base">{{$p.Nickname}}</div>
+            <div class="font-bold text-white truncate text-sm">{{$p.Nickname}}</div>
           </div>
-          <div class="text-right shrink-0">
-            <span class="bg-primary/10 text-primary text-sm font-black px-3 py-1.5 rounded-lg border border-primary/20">{{$p.FinalScore}} pts</span>
-          </div>
+          <!-- Score -->
+          <div class="font-black text-sm shrink-0" style="color:#a78bfa;">{{$p.FinalScore}} pts</div>
         </div>
-        {{end}}
-        {{end}}
+        {{end}}{{end}}
       </div>
-    </div>
-    {{end}}
 
-    {{end}}{{end}}
-
-    <!-- Actions -->
-    <div class="flex flex-wrap justify-center gap-4 mt-4 animate-fade-in-up relative z-20" style="animation-delay: 0.8s">
-      <a href="/dashboard" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-slate-300 transition-all hover:-translate-y-1 flex items-center gap-2">
-        <span class="text-xl">🏠</span> {{t .Lang "dashboard"}}
-      </a>
-      
-      {{with .Data}}{{with .Session}}
-      <a href="/history/{{.ID}}" class="bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 font-bold py-3.5 px-8 rounded-2xl shadow-sm transition-all hover:-translate-y-1 flex items-center gap-2">
-        <span class="text-xl">📋</span> {{t $.Lang "history"}}
-      </a>
-      {{end}}{{end}}
+      <!-- Action buttons -->
+      <div class="p-4 border-t space-y-2 shrink-0" style="border-color: rgba(255,255,255,0.08);">
+        <a href="/dashboard"
+           class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white transition-all hover:-translate-y-0.5"
+           style="background: linear-gradient(135deg, #7c3aed, #db2777); box-shadow: 0 4px 15px rgba(124,58,237,0.35);">
+          🏠 {{t .Lang "dashboard"}}
+        </a>
+        {{with .Data}}{{with .Session}}
+        <a href="/history/{{.ID}}"
+           class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all hover:-translate-y-0.5 border"
+           style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+          📋 {{t $.Lang "history"}}
+        </a>
+        {{end}}{{end}}
+      </div>
     </div>
 
   </div>
 
-  <script>
-    function podiumPage() {
-      return {
-        init() {
-          // Trigger fireworks when page loads (delay slightly to match podium pop-in)
-          setTimeout(() => {
-            this.shootFireworks();
-          }, 600);
+<script>
+function podiumPage() {
+  return {
+    musicPlaying: false,
 
-          // Repeated optional fireworks every 3 seconds
-          setInterval(() => {
-            this.shootRandomFirework();
-          }, 3000);
-        },
+    toggleMusic() {
+      const audio = document.getElementById('bgm');
+      if (!audio) return;
+      if (this.musicPlaying) { audio.pause(); this.musicPlaying = false; }
+      else { audio.volume = 0.45; audio.play().then(() => { this.musicPlaying = true; }).catch(() => {}); }
+    },
 
-        shootFireworks() {
-          const container = document.getElementById('fireworks-container');
-          if(!container) return;
-          
-          // Shoot from left and right
-          this.createExplosion(container, window.innerWidth * 0.2, window.innerHeight * 0.5);
-          this.createExplosion(container, window.innerWidth * 0.8, window.innerHeight * 0.5);
-          
-          // Center explosion slightly higher
-          setTimeout(() => {
-            this.createExplosion(container, window.innerWidth * 0.5, window.innerHeight * 0.3);
-          }, 400);
-        },
-
-        shootRandomFirework() {
-          const container = document.getElementById('fireworks-container');
-          if(!container) return;
-          const x = Math.random() * window.innerWidth;
-          const y = (Math.random() * window.innerHeight * 0.5) + (window.innerHeight * 0.1);
-          this.createExplosion(container, x, y);
-        },
-
-        createExplosion(container, x, y) {
-          const colors = ['#FBBF24', '#F472B6', '#60A5FA', '#34D399', '#8B5CF6'];
-          const particlesCount = 40; // Канча бөлүкчө жарылат
-
-          for (let i = 0; i < particlesCount; i++) {
-            const particle = document.createElement('div');
-            particle.classList.add('firework');
-            
-            // Random color
-            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            // Set position
-            particle.style.left = x + 'px';
-            particle.style.top = y + 'px';
-            
-            // Random direction (tx, ty variables used in CSS animation)
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = 50 + Math.random() * 150; // Random distance
-            const tx = Math.cos(angle) * velocity;
-            const ty = Math.sin(angle) * velocity;
-            
-            particle.style.setProperty('--tx', `${tx}px`);
-            particle.style.setProperty('--ty', `${ty}px`);
-            
-            container.appendChild(particle);
-            
-            // Remove after animation
-            setTimeout(() => {
-              particle.remove();
-            }, 1000);
-          }
+    init() {
+      const tryPlay = () => {
+        const audio = document.getElementById('bgm');
+        if (audio && !this.musicPlaying) {
+          audio.volume = 0.45;
+          audio.play().then(() => {
+            this.musicPlaying = true;
+            document.removeEventListener('click', tryPlay);
+          }).catch(() => {});
         }
+      };
+      tryPlay();
+      document.addEventListener('click', tryPlay);
+      setTimeout(() => this.launchConfetti(), 400);
+      setInterval(() => this.launchConfetti(), 5000);
+    },
+
+    launchConfetti() {
+      const container = document.getElementById('confetti-container');
+      if (!container) return;
+      const colors = ['#fbbf24','#f472b6','#60a5fa','#34d399','#a78bfa','#fb923c'];
+      for (let i = 0; i < 90; i++) {
+        const el = document.createElement('div');
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const x = Math.random() * 100;
+        const delay = Math.random() * 900;
+        const dur = 2500 + Math.random() * 2000;
+        const size = 5 + Math.random() * 9;
+        const isRect = Math.random() > 0.45;
+        el.style.cssText = `position:absolute;width:${size}px;height:${isRect ? size * 0.4 : size}px;background:${color};border-radius:${isRect ? '2px' : '50%'};left:${x}%;top:-10px;opacity:1;transform:rotate(${Math.random()*360}deg);animation:confettiFall ${dur}ms ease-in ${delay}ms forwards;`;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), dur + delay + 100);
       }
     }
-  </script>
+  };
+}
+</script>
 
+<style>
+  @keyframes popIn {
+    from { transform: scale(0.5) translateY(60px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .pop-in { animation: popIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  .stars-layer {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 40% 8%, rgba(255,255,255,0.8) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 60%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 70%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 75%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 60% 85%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 55%, rgba(255,255,255,0.4) 0%, transparent 100%);
+    animation: starsTwinkle 6s ease-in-out infinite alternate;
+  }
+  @keyframes starsTwinkle {
+    0%   { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  .eq-bar {
+    height: 4px;
+    animation: eqBounce 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes eqBounce {
+    0%   { height: 3px; }
+    100% { height: 14px; }
+  }
+</style>
 </body>
 </html>
 {{end}}

@@ -164,10 +164,15 @@
             </div>
 
             <!-- Avatar -->
-            <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl relative shadow-xl transition-all duration-500"
+            <div class="w-12 h-12 rounded-full overflow-hidden relative shadow-xl transition-all duration-500"
                  :class="p.answered === totalQuestions ? 'animate-bounce' : ''"
                  :style="avatarRing(p)">
-              <span x-text="p.avatar && !p.avatar.startsWith('/') ? p.avatar : '🐶'"></span>
+              <template x-if="p.avatar && p.avatar.startsWith('/')">
+                <img :src="p.avatar" class="w-full h-full object-cover block" />
+              </template>
+              <template x-if="!(p.avatar && p.avatar.startsWith('/'))">
+                <div class="w-full h-full flex items-center justify-center text-2xl" x-text="p.avatar || '🐶'"></div>
+              </template>
             </div>
 
           </div>
@@ -193,9 +198,14 @@
               <span x-show="i===2" class="text-2xl">🥉</span>
               <span x-show="i>2" class="text-sm font-black" style="color: rgba(255,255,255,0.35);" x-text="i+1"></span>
             </div>
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 border"
+            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border flex items-center justify-center"
                  style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12);">
-              <span x-text="p.avatar && !p.avatar.startsWith('/') ? p.avatar : '🐶'"></span>
+              <template x-if="p.avatar && p.avatar.startsWith('/')">
+                <img :src="p.avatar" class="w-full h-full object-cover block" />
+              </template>
+              <template x-if="!(p.avatar && p.avatar.startsWith('/'))">
+                <span class="text-xl" x-text="p.avatar || '🐶'"></span>
+              </template>
             </div>
             <div class="flex-1 min-w-0">
               <div class="font-bold text-white truncate" :class="i<3 ? 'text-base' : 'text-sm'" x-text="p.nickname"></div>

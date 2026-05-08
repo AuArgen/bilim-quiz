@@ -99,5 +99,7 @@
   "rating": "Rating",
   "ratings": "Reviews",
   "avg_rating": "Average rating",
-  "no_ratings": "No reviews yet"
+  "no_ratings": "No reviews yet",
+  "game_over": "Game Over!",
+  "all_played_well": "Everyone played great!"
 }

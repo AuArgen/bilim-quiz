@@ -10,8 +10,8 @@ import (
 )
 
 func UploadPlayerImage(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(2 << 20); err != nil {
-		http.Error(w, "file too large", http.StatusBadRequest)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 

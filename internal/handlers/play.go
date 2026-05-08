@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -35,6 +36,13 @@ type MonitorData struct {
 	Progress  map[int]int
 	Scores    map[int]int
 	Players   []repository.SessionPlayer
+}
+
+type PodiumData struct {
+	Session     *repository.GameSession
+	Players     []repository.SessionPlayer
+	Questions   []repository.SnapshotQuestion
+	DurationStr string
 }
 
 // StartSession — teacher presses Play, creates session + snapshot.
@@ -158,8 +166,18 @@ func (h *PlayHandler) PodiumPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	players, _ := h.sessions.GetLeaderboard(r.Context(), sessionID)
-	Render(w, r, "podium.html", map[string]any{
-		"Session": sess,
-		"Players": players,
+	snapQs, _ := h.sessions.GetSnapshotQuestions(r.Context(), sessionID)
+
+	durationStr := ""
+	if sess.StartedAt != nil && sess.FinishedAt != nil {
+		d := sess.FinishedAt.Sub(*sess.StartedAt)
+		durationStr = fmt.Sprintf("%d:%02d", int(d.Minutes()), int(d.Seconds())%60)
+	}
+
+	Render(w, r, "podium.html", PodiumData{
+		Session:     sess,
+		Players:     players,
+		Questions:   snapQs,
+		DurationStr: durationStr,
 	})
 }
