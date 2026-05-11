@@ -19,7 +19,7 @@ func InitStore() {
 	store = sessions.NewCookieStore([]byte(secret))
 	store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   86400 * 30,
+		MaxAge:   86400 * 7,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	}

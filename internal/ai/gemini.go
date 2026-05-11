@@ -24,7 +24,7 @@ type Answer struct {
 
 func GenerateQuestions(ctx context.Context, apiKey, topic string, count int) ([]GeneratedQuestion, error) {
 	if count <= 0 {
-		count = 5
+		count = 10
 	}
 
 	prompt := fmt.Sprintf(`Generate %d multiple choice quiz questions about "%s".
