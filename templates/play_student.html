@@ -127,8 +127,8 @@
             :class="{
               /* States when result received from server */
               'opacity-40 scale-95': resultReceived && selectedAnswer !== ans.text && !ans.is_correct,
-              'bg-success border-success text-white ring-4 ring-success/30 shadow-lg shadow-success/30 scale-[1.02] z-10': resultReceived && ans.is_correct,
-              'bg-red-500 border-red-500 text-white ring-4 ring-red-300 shadow-lg': resultReceived && !ans.is_correct && selectedAnswer === ans.text,
+              'bg-success border-success text-white ring-4 ring-success/30 shadow-lg shadow-success/30 scale-[1.02] z-10': resultReceived && (ans.is_correct || (selectedAnswer === ans.text && answerWasCorrect)),
+              'bg-red-500 border-red-500 text-white ring-4 ring-red-300 shadow-lg': resultReceived && selectedAnswer === ans.text && !answerWasCorrect,
               /* Selected but waiting for server — yellow */
               'bg-warning/20 border-warning text-slate-800 ring-4 ring-warning/40 shadow-md': answered && !resultReceived && selectedAnswer === ans.text,
 
@@ -245,6 +245,7 @@ function playStudent(pin, playerId, lang) {
     timer: null,
     answered: false,
     resultReceived: false,
+    answerWasCorrect: false,
     selectedAnswer: '',
     earnedPoints: 0,
     totalScore: 0,
@@ -269,6 +270,7 @@ function playStudent(pin, playerId, lang) {
         this.timeTotal = this.timeLeft;
         this.answered = false;
         this.resultReceived = false;
+        this.answerWasCorrect = false;
         this.selectedAnswer = '';
         this.earnedPoints = 0;
         this.startMs = Date.now();
@@ -282,10 +284,7 @@ function playStudent(pin, playerId, lang) {
         this.startTimer();
       }
       if (msg.type === 'answer_result') {
-        this.resultReceived = true;
-        this.earnedPoints = msg.earned_points;
-        this.totalScore = msg.total_score;
-        // Reveal is_correct on shuffled order (match by text)
+        // Update displayAnswers with is_correct BEFORE setting resultReceived
         if (msg.answers && this.displayAnswers.length) {
           const correctMap = {};
           msg.answers.forEach(a => { correctMap[a.text] = a.is_correct; });
@@ -293,6 +292,10 @@ function playStudent(pin, playerId, lang) {
             ...a, is_correct: correctMap[a.text] ?? false,
           }));
         }
+        this.earnedPoints = msg.earned_points;
+        this.totalScore = msg.total_score;
+        this.answerWasCorrect = !!msg.is_correct;
+        this.resultReceived = true;
       }
       if (msg.type === 'game_over') {
         this.state = 'finished';
