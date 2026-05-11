@@ -7,284 +7,403 @@
   <title>{{appName}} — {{t .Lang "dashboard"}}</title>
   <meta name="robots" content="noindex, nofollow"/>
   <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/static/css/app.css"/>
-  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:{DEFAULT:'#F472B6',hover:'#EC4899'},success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Poppins', 'sans-serif'] },
+          colors: {
+            primary: { DEFAULT: '#8B5CF6', hover: '#7C3AED' },
+            accent:  { DEFAULT: '#F472B6', hover: '#EC4899' },
+            success: '#10B981',
+            warning: '#F59E0B',
+            info:    '#3B82F6',
+            cream:   '#F8F7FF',
+          },
+          animation: {
+            'fade-up':   'fadeUp 0.5s ease both',
+            'slide-in':  'slideIn 0.4s ease both',
+          },
+          keyframes: {
+            fadeUp:  { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            slideIn: { '0%': { opacity: '0', transform: 'translateX(-12px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    .dashboard-sidebar {
+    .sidebar-panel {
       transform: translateX(-100%);
-      transition: transform 300ms ease;
+      transition: transform 300ms cubic-bezier(.4,0,.2,1);
       pointer-events: none;
     }
-    .dashboard-sidebar.dashboard-sidebar-open {
+    .sidebar-panel.open {
       transform: translateX(0);
       pointer-events: auto;
     }
     @media (min-width: 1024px) {
-      .dashboard-sidebar {
-        transform: translateX(0);
-        pointer-events: auto;
-      }
+      .sidebar-panel { transform: translateX(0); pointer-events: auto; }
     }
+    .game-row:hover .game-title { color: #8B5CF6; }
+    .action-btn { transition: all 0.18s ease; }
+    .action-btn:hover { transform: translateY(-1px); }
   </style>
 </head>
 <body class="bg-cream text-slate-800 min-h-screen font-sans selection:bg-primary/20">
 
-  <!-- Sidebar + Main layout -->
-  <div class="flex min-h-screen" x-data="{sidebarOpen: false}"
-       x-effect="document.body.classList.toggle('overflow-hidden', sidebarOpen && window.innerWidth < 1024)"
-       @keydown.escape.window="sidebarOpen=false">
+<div class="flex min-h-screen" x-data="{sidebarOpen: false}"
+     x-effect="document.body.classList.toggle('overflow-hidden', sidebarOpen && window.innerWidth < 1024)"
+     @keydown.escape.window="sidebarOpen=false">
 
-    <!-- Mobile overlay -->
-    <div x-show="sidebarOpen" @click="sidebarOpen=false"
-         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 lg:hidden"
-         x-transition:enter="transition-opacity duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition-opacity duration-300"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         style="display:none"></div>
+  <!-- Mobile overlay -->
+  <div x-show="sidebarOpen" @click="sidebarOpen=false"
+       class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 lg:hidden"
+       x-transition:enter="transition-opacity duration-300"
+       x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+       x-transition:leave="transition-opacity duration-300"
+       x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+       style="display:none"></div>
 
-    <!-- Sidebar -->
-    <aside class="dashboard-sidebar fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 flex flex-col py-8 px-5 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-30 overflow-y-auto"
-           :class="sidebarOpen ? 'dashboard-sidebar-open' : ''">
-      <!-- Башкы бетке шилтеме -->
-      <div class="flex flex-wrap gap-2 mb-10">
-        <button type="button" @click.stop.prevent="sidebarOpen=false" aria-label="Close menu" class="lg:hidden shrink-0 w-[100%] h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors text-sm font-bold">✕</button>
-        <a href="/" @click="sidebarOpen=false" class="flex items-center gap-3 px-2 group cursor-pointer decoration-transparent min-w-0 flex-1" title="Башкы бетке кайтуу">
-          <div class="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-xl shadow-inner group-hover:scale-105 group-hover:bg-primary/20 transition-all duration-300 shrink-0">🦉</div>
-          <span class="text-xl md:text-2xl font-black text-slate-800 tracking-tight group-hover:text-primary transition-colors truncate">{{appName}}</span>
-        </a>
-      </div>
+  <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+  <aside class="sidebar-panel fixed lg:static inset-y-0 left-0 w-72 bg-white flex flex-col py-8 px-5 shrink-0 z-30 overflow-y-auto border-r border-slate-100/80 shadow-[2px_0_20px_rgba(0,0,0,0.04)]"
+         :class="sidebarOpen ? 'open' : ''">
 
-      <nav class="flex flex-col gap-2.5 flex-1">
-        <a href="/dashboard" @click="sidebarOpen=false" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-info/10 text-info hover:bg-info hover:text-white shadow-sm transition-all duration-300 font-medium">
-          <span class="text-xl">🏠</span> {{t .Lang "dashboard"}}
-        </a>
-        <a href="/games/new" @click="sidebarOpen=false" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/10 text-accent hover:bg-accent hover:text-white shadow-sm transition-all duration-300 font-medium">
-          <span class="text-xl">🚀</span> {{t .Lang "create_game"}}
-        </a>
-        <a href="/history" @click="sidebarOpen=false" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-success/10 text-success hover:bg-success hover:text-white shadow-sm transition-all duration-300 font-medium">
-          <span class="text-xl">📋</span> {{t .Lang "history"}}
-        </a>
-      </nav>
-
-      <!-- Teacher profile -->
-      <div class="border-t border-slate-100 pt-5 mt-4">
-        {{with .Data}}{{with .Teacher}}
-        <div class="flex items-center gap-3 mb-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-          <img src="{{.AvatarURL}}" class="w-10 h-10 rounded-full shadow-sm object-cover" alt="avatar"/>
-          <div class="min-w-0">
-            <div class="text-sm font-bold text-slate-700 truncate">{{.Name}}</div>
-            <div class="text-xs text-slate-500 truncate">{{.Email}}</div>
-          </div>
+    <!-- Logo -->
+    <div class="flex flex-wrap gap-2 mb-10">
+      <button type="button" @click.stop.prevent="sidebarOpen=false"
+              class="lg:hidden w-full h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-bold transition-colors">✕ Жабуу</button>
+      <a href="/" @click="sidebarOpen=false" class="flex items-center gap-3 px-1 group cursor-pointer flex-1 min-w-0">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 overflow-hidden bg-gradient-to-br from-primary to-accent">
+          <span class="text-white text-xl">🦉</span>
         </div>
-        {{end}}{{end}}
+        <span class="text-xl font-black text-slate-800 tracking-tight group-hover:text-primary transition-colors truncate">{{appName}}</span>
+      </a>
+    </div>
 
-        <!-- Lang switcher -->
-        <div class="flex gap-1 mb-4 bg-slate-100 p-1 rounded-lg">
-          <a href="/lang/ky" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "ky"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">KY</a>
-          <a href="/lang/ru" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "ru"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">RU</a>
-          <a href="/lang/en" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-md font-medium {{if eq $.Lang "en"}}bg-white text-primary shadow-sm{{else}}text-slate-500 hover:text-slate-900{{end}} transition-colors">EN</a>
+    <!-- Nav -->
+    <nav class="flex flex-col gap-1.5 flex-1">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-1">Меню</p>
+      <a href="/dashboard" @click="sidebarOpen=false"
+         class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm bg-primary text-white shadow-md shadow-primary/30 transition-all">
+        <span class="text-base">🏠</span> {{t .Lang "dashboard"}}
+      </a>
+      <a href="/games/new" @click="sidebarOpen=false"
+         class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-600 hover:bg-accent/10 hover:text-accent transition-all">
+        <span class="text-base">🚀</span> {{t .Lang "create_game"}}
+      </a>
+      <a href="/history" @click="sidebarOpen=false"
+         class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-600 hover:bg-success/10 hover:text-success transition-all">
+        <span class="text-base">📋</span> {{t .Lang "history"}}
+      </a>
+
+      <!-- Quick tip card -->
+      <div class="mt-6 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/10">
+        <p class="text-xs font-bold text-primary mb-1">💡 Жардам</p>
+        <p class="text-xs text-slate-500 leading-relaxed">AI менен суроо жасоо үчүн Gemini API ключуңузду орнотуңуз.</p>
+      </div>
+    </nav>
+
+    <!-- Teacher profile -->
+    <div class="border-t border-slate-100 pt-5 mt-4">
+      {{with .Data}}{{with .Teacher}}
+      <div class="flex items-center gap-3 mb-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+        <img src="{{.AvatarURL}}" class="w-10 h-10 rounded-full shadow-sm object-cover shrink-0" alt="avatar"/>
+        <div class="min-w-0">
+          <div class="text-sm font-bold text-slate-700 truncate">{{.Name}}</div>
+          <div class="text-xs text-slate-400 truncate">{{.Email}}</div>
         </div>
-        <a href="/logout" @click="sidebarOpen=false" class="flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-red-500 transition-colors font-semibold py-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-          {{t .Lang "logout"}}
-        </a>
       </div>
-    </aside>
+      {{end}}{{end}}
 
-    <!-- Main content -->
-    <main class="flex-1 p-4 lg:p-10 overflow-auto lg:ml-0">
-
-      <!-- Mobile top bar -->
-      <div class="lg:hidden flex items-center justify-between mb-6 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
-        <button type="button" @click="sidebarOpen=true" aria-label="Open menu" class="flex items-center justify-center w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-600 font-bold text-lg">☰</button>
-        <a href="/" class="flex items-center gap-2 decoration-transparent">
-          <div class="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-base">🦉</div>
-          <span class="text-lg font-black text-slate-800">{{appName}}</span>
-        </a>
-        <a href="/logout" class="flex items-center justify-center w-9 h-9 bg-red-50 hover:bg-red-100 rounded-xl transition-colors text-red-400 text-sm">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        </a>
+      <!-- Lang -->
+      <div class="flex gap-1 mb-4 bg-slate-100 p-1 rounded-xl">
+        <a href="/lang/ky" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-lg font-bold {{if eq $.Lang "ky"}}bg-white text-primary shadow-sm{{else}}text-slate-400 hover:text-slate-700{{end}} transition-all">KY</a>
+        <a href="/lang/ru" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-lg font-bold {{if eq $.Lang "ru"}}bg-white text-primary shadow-sm{{else}}text-slate-400 hover:text-slate-700{{end}} transition-all">RU</a>
+        <a href="/lang/en" @click="sidebarOpen=false" class="flex-1 text-center text-xs py-1.5 rounded-lg font-bold {{if eq $.Lang "en"}}bg-white text-primary shadow-sm{{else}}text-slate-400 hover:text-slate-700{{end}} transition-all">EN</a>
       </div>
 
+      <a href="/logout" @click="sidebarOpen=false"
+         class="flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-red-500 transition-colors font-semibold py-2 rounded-xl hover:bg-red-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        {{t .Lang "logout"}}
+      </a>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ MAIN ═══════════════════ -->
+  <main class="flex-1 overflow-auto min-w-0">
+
+    <!-- Mobile top bar -->
+    <div class="lg:hidden sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur border-b border-slate-100">
+      <button type="button" @click="sidebarOpen=true"
+              class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 font-bold text-lg transition-colors">☰</button>
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm">🦉</div>
+        <span class="text-base font-black text-slate-800">{{appName}}</span>
+      </a>
+      <a href="/logout" class="w-9 h-9 bg-red-50 hover:bg-red-100 rounded-xl flex items-center justify-center text-red-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </a>
+    </div>
+
+    <div class="p-4 lg:p-8 max-w-6xl mx-auto">
       {{with .Data}}
-      
-      <!-- Stats cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 animate-fade-in-up" style="animation-delay: 0.1s">
-        <div class="bg-gradient-to-br from-success/20 to-success/5 border border-success/10 rounded-2xl flex items-center p-6 gap-5 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-          <div class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl shadow-sm text-success">🎮</div>
+
+      <!-- ── Welcome Hero ── -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-violet-600 to-accent p-7 mb-8 shadow-2xl shadow-primary/25 animate-fade-up">
+        <!-- Decorative circles -->
+        <div class="pointer-events-none absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/8"></div>
+        <div class="pointer-events-none absolute right-20 -bottom-8 w-32 h-32 rounded-full bg-white/6"></div>
+        <div class="pointer-events-none absolute -left-6 bottom-0 w-24 h-24 rounded-full bg-white/5"></div>
+
+        <div class="relative z-10 flex flex-wrap items-center justify-between gap-5">
           <div>
-            <div class="text-4xl font-black text-slate-800 mb-1">{{.Stats.TotalGames}}</div>
-            <div class="text-xs text-success font-bold uppercase tracking-wider">{{t $.Lang "total_games"}}</div>
+            {{with .Teacher}}
+            <p class="text-white/65 text-sm font-medium mb-1 flex items-center gap-1.5">
+              <span>👋</span> Кош келдиңиз,
+            </p>
+            <h1 class="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">{{.Name}}</h1>
+            {{end}}
+            <p class="text-white/70 text-sm">Бүгүн жаңы оюн баштаңыз — окуучуларыңыз күтүп жатат!</p>
           </div>
-        </div>
-        <div class="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 rounded-2xl flex items-center p-6 gap-5 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-          <div class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl shadow-sm text-primary">📊</div>
-          <div>
-            <div class="text-4xl font-black text-slate-800 mb-1">{{.Stats.TotalSessions}}</div>
-            <div class="text-xs text-primary font-bold uppercase tracking-wider">{{t $.Lang "total_sessions"}}</div>
-          </div>
-        </div>
-        <div class="bg-gradient-to-br from-warning/20 to-warning/5 border border-warning/10 rounded-2xl flex items-center p-6 gap-5 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-          <div class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl shadow-sm text-warning">👨‍🎓</div>
-          <div>
-            <div class="text-4xl font-black text-slate-800 mb-1">{{.Stats.TotalPlayers}}</div>
-            <div class="text-xs text-amber-600 font-bold uppercase tracking-wider">{{t $.Lang "total_players"}}</div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <a href="/games/new"
+               class="flex items-center gap-2 bg-white text-primary hover:bg-white/90 active:scale-95 px-5 py-2.5 rounded-2xl text-sm font-bold shadow-lg shadow-black/10 transition-all">
+              ➕ {{t $.Lang "create_game"}}
+            </a>
+            <a href="/history"
+               class="flex items-center gap-2 bg-white/15 hover:bg-white/25 active:scale-95 text-white px-5 py-2.5 rounded-2xl text-sm font-bold border border-white/20 transition-all">
+              📋 {{t $.Lang "history"}}
+            </a>
           </div>
         </div>
       </div>
 
-      <!-- Gemini Key (Оюндар тизмесинен өйдө жылдырылды) -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8 animate-fade-in-up" style="animation-delay: 0.2s"
+      <!-- ── Stats Cards ── -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8" style="animation: fadeUp .5s .1s ease both; opacity:0; animation-fill-mode:both">
+        <!-- Games -->
+        <div class="group relative overflow-hidden bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+          <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-success/20 to-emerald-100 flex items-center justify-center text-2xl shadow-inner shrink-0 group-hover:scale-110 transition-transform duration-300">🎮</div>
+            <div>
+              <div class="text-3xl font-black text-slate-800 leading-none mb-1">{{.Stats.TotalGames}}</div>
+              <div class="text-xs font-bold text-success uppercase tracking-wider">{{t $.Lang "total_games"}}</div>
+            </div>
+          </div>
+          <div class="relative z-10 mt-4 pt-4 border-t border-slate-100">
+            <a href="/games/new" class="text-xs text-slate-400 hover:text-success transition-colors font-semibold flex items-center gap-1">
+              Жаңы оюн жасоо <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Sessions -->
+        <div class="group relative overflow-hidden bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+          <div class="absolute inset-0 bg-gradient-to-br from-violet-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-violet-100 flex items-center justify-center text-2xl shadow-inner shrink-0 group-hover:scale-110 transition-transform duration-300">📊</div>
+            <div>
+              <div class="text-3xl font-black text-slate-800 leading-none mb-1">{{.Stats.TotalSessions}}</div>
+              <div class="text-xs font-bold text-primary uppercase tracking-wider">{{t $.Lang "total_sessions"}}</div>
+            </div>
+          </div>
+          <div class="relative z-10 mt-4 pt-4 border-t border-slate-100">
+            <a href="/history" class="text-xs text-slate-400 hover:text-primary transition-colors font-semibold flex items-center gap-1">
+              Тарыхты карооо <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Players -->
+        <div class="group relative overflow-hidden bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+          <div class="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-warning/20 to-amber-100 flex items-center justify-center text-2xl shadow-inner shrink-0 group-hover:scale-110 transition-transform duration-300">👨‍🎓</div>
+            <div>
+              <div class="text-3xl font-black text-slate-800 leading-none mb-1">{{.Stats.TotalPlayers}}</div>
+              <div class="text-xs font-bold text-amber-500 uppercase tracking-wider">{{t $.Lang "total_players"}}</div>
+            </div>
+          </div>
+          <div class="relative z-10 mt-4 pt-4 border-t border-slate-100">
+            <span class="text-xs text-slate-400 font-semibold">Жалпы катышуучулар</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Gemini Key ── -->
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 mb-8"
+           style="animation: fadeUp .5s .2s ease both; opacity:0; animation-fill-mode:both"
            x-data="{open:{{if .Teacher}}{{if .Teacher.GeminiKey}}false{{else}}true{{end}}{{else}}true{{end}}}">
         {{with .Teacher}}
         {{if eq .GeminiKey ""}}
-        <!-- Warning: no key set -->
-        <div class="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 mb-2 shadow-sm">
-          <div class="text-3xl shrink-0 mt-1">⚠️</div>
+        <div class="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200/70">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl shrink-0">⚠️</div>
           <div class="flex-1 min-w-0">
-            <p class="font-black text-amber-900 text-lg mb-1">{{t $.Lang "gemini_key_setup"}}</p>
-            <p class="text-sm text-amber-700 mb-3 leading-relaxed">{{t $.Lang "gemini_key_desc"}}</p>
+            <p class="font-black text-amber-900 text-base mb-1">{{t $.Lang "gemini_key_setup"}}</p>
+            <p class="text-sm text-amber-700 mb-4 leading-relaxed">{{t $.Lang "gemini_key_desc"}}</p>
             <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener"
-               class="inline-flex items-center gap-2 text-sm font-bold text-amber-900 bg-amber-200/50 hover:bg-amber-200 px-4 py-2 rounded-lg transition-colors border border-amber-300/50">
-              🔑 {{t $.Lang "gemini_key_get"}} <span class="text-lg">↗</span>
+               class="inline-flex items-center gap-2 text-sm font-bold text-amber-900 bg-amber-200/60 hover:bg-amber-200 px-4 py-2 rounded-xl transition-colors border border-amber-300/50">
+              🔑 {{t $.Lang "gemini_key_get"}} ↗
             </a>
           </div>
         </div>
         {{else}}
-        <!-- Key is set: compact success row -->
-        <div class="flex items-center justify-between gap-3 bg-success/5 p-4 rounded-xl border border-success/20 mb-2">
-          <div class="flex items-center gap-3 flex-1">
-            <div class="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center text-xl shadow-sm">🤖</div>
+        <div class="flex items-center justify-between gap-3 bg-emerald-50 p-4 rounded-2xl border border-emerald-200/60 mb-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-success/15 flex items-center justify-center text-lg">🤖</div>
             <div>
-              <div class="text-sm font-bold text-success-700 flex items-center gap-2">
+              <div class="text-sm font-bold text-emerald-800 flex items-center gap-2">
                 {{t $.Lang "gemini_key_saved"}}
-                <span class="inline-flex items-center justify-center bg-success text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">{{t $.Lang "gemini_key_active"}}</span>
+                <span class="bg-success text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">{{t $.Lang "gemini_key_active"}}</span>
               </div>
             </div>
           </div>
-          <button @click="open=!open" class="text-xs text-slate-500 hover:text-primary transition-colors font-bold bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-primary/30 shadow-sm"
+          <button @click="open=!open"
+                  class="text-xs text-slate-500 hover:text-primary font-bold bg-white px-3 py-1.5 rounded-xl border border-slate-200 hover:border-primary/30 shadow-sm transition-all"
                   x-text="open?'{{t $.Lang "gemini_key_close"}}':'{{t $.Lang "gemini_key_change"}}'"></button>
         </div>
         {{end}}
-
         <div x-show="open" x-transition class="mt-4">
           <form method="POST" action="/dashboard/gemini-key" class="flex gap-3 flex-wrap items-start">
             <div class="relative flex-1 min-w-[240px]">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">🔑</div>
-              <input type="password" name="gemini_key"
-                     value="{{.GeminiKey}}"
-                     class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-mono text-sm shadow-inner bg-slate-50 focus:bg-white" 
+              <input type="password" name="gemini_key" value="{{.GeminiKey}}"
+                     class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-mono text-sm bg-slate-50 focus:bg-white"
                      placeholder="AIzaSy..."/>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-info/5 border border-info/20 rounded-xl px-4 py-3 text-sm text-slate-600 max-w-xl">
-              <span class="font-semibold leading-snug">
-                Gemini API key алуу үчүн Google AI Studio баракчасына кирип, өз ключуңузду түзүп алып ушул жерге коюңуз.
-              </span>
+              <span class="font-semibold leading-snug">Gemini API key алуу үчүн Google AI Studio баракчасына кириңиз.</span>
               <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener"
-                 class="shrink-0 inline-flex items-center justify-center gap-2 bg-info hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm">
-                API key алуу <span>↗</span>
+                 class="shrink-0 inline-flex items-center gap-2 bg-info hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+                API key алуу ↗
               </a>
             </div>
-            <button class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+            <button class="bg-slate-800 hover:bg-slate-900 active:scale-95 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2">
               💾 {{t $.Lang "save_key"}}
             </button>
           </form>
           <p class="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {{t $.Lang "gemini_key_hint"}}
           </p>
         </div>
         {{end}}
       </div>
 
-      <!-- Games table -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 animate-fade-in-up" style="animation-delay: 0.3s">
-        <div class="flex flex-wrap items-center justify-between mb-6 gap-4">
-          <h2 class="text-2xl font-bold text-slate-800">{{t $.Lang "my_games"}}</h2>
-          <a href="/games/new" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm shadow-primary/30 transition-all duration-300 hover:shadow-primary/50 hover:-translate-y-0.5">
-            <span>➕</span> {{t $.Lang "create_game"}}
+      <!-- ── Games Section ── -->
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
+           style="animation: fadeUp .5s .3s ease both; opacity:0; animation-fill-mode:both">
+
+        <!-- Section header -->
+        <div class="flex flex-wrap items-center justify-between gap-4 p-6 pb-5 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-lg">🎮</div>
+            <div>
+              <h2 class="text-xl font-black text-slate-800">{{t $.Lang "my_games"}}</h2>
+              {{if .Games}}<p class="text-xs text-slate-400 font-medium">{{len .Games}} оюн</p>{{end}}
+            </div>
+          </div>
+          <a href="/games/new"
+             class="flex items-center gap-2 bg-primary hover:bg-primary-hover active:scale-95 text-white px-5 py-2.5 rounded-2xl text-sm font-bold shadow-md shadow-primary/25 transition-all duration-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            {{t $.Lang "create_game"}}
           </a>
         </div>
 
         {{if .Games}}
-        <div class="overflow-x-auto rounded-xl border border-slate-100">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
-                <th class="text-left py-4 px-5 font-bold w-12">№</th>
-                <th class="text-left py-4 px-4 font-bold">{{t $.Lang "game_title"}}</th>
-                <th class="text-left py-4 px-4 font-bold hidden md:table-cell">{{t $.Lang "game_desc"}}</th>
-                <th class="text-center py-4 px-4 font-bold">{{t $.Lang "questions"}}</th>
-                <th class="text-left py-4 px-4 font-bold hidden lg:table-cell">{{t $.Lang "updated_at"}}</th>
-                <th class="text-right py-4 px-5 font-bold">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              {{range $i, $g := .Games}}
-              <tr class="hover:bg-slate-50/80 transition-colors group">
-                <td class="py-4 px-5 text-slate-400 font-bold">{{inc $i}}</td>
-                <td class="py-4 px-4 font-bold text-slate-800 text-base group-hover:text-primary transition-colors">{{$g.Title}}</td>
-                <td class="py-4 px-4 text-slate-500 hidden md:table-cell max-w-xs truncate font-medium">{{$g.Description}}</td>
-                <td class="py-4 px-4 text-center">
-                  <span class="inline-flex items-center justify-center bg-primary/10 text-primary px-3 py-1 text-xs font-bold rounded-full border border-primary/20">{{$g.QuestionCount}}</span>
-                </td>
-                <td class="py-4 px-4 text-slate-400 hidden lg:table-cell font-medium text-xs">{{fmtTime $g.UpdatedAt}}</td>
-                <td class="py-4 px-5">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <a href="/games/{{$g.ID}}/edit?add=1" class="w-8 h-8 flex items-center justify-center rounded-lg bg-success/10 text-success hover:bg-success hover:text-white transition-colors" title="{{t $.Lang "add_question"}}">➕</a>
-                    <a href="/play/{{$g.ID}}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-info/10 text-info hover:bg-info hover:text-white transition-colors" title="{{t $.Lang "play_game"}}">▶</a>
-                    <a href="/games/{{$g.ID}}/edit" class="w-8 h-8 flex items-center justify-center rounded-lg bg-warning/10 text-amber-500 hover:bg-warning hover:text-white transition-colors" title="Edit">✏️</a>
-                    <a href="/history?game_id={{$g.ID}}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors" title="History">📋</a>
-                    <!-- Share button with dropdown -->
-                    <div x-data="{open:false, copied:false}" class="relative inline-block">
-                      <button @click="open=!open" @click.outside="open=false"
-                              class="w-8 h-8 flex items-center justify-center rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
-                              title="{{t $.Lang "share_game"}}">🔗</button>
-                      <div x-show="open" x-transition
-                           class="absolute right-0 top-full mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 w-80">
-                        <p class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{{t $.Lang "share_link"}}</p>
-                        <div class="flex gap-2">
-                          <input type="text" readonly
-                                 :value="`${window.location.origin}/shared/{{$g.ShareToken}}`"
-                                 class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-700 min-w-0"/>
-                          <button @click="navigator.clipboard.writeText(`${window.location.origin}/shared/{{$g.ShareToken}}`).then(()=>{copied=true;setTimeout(()=>copied=false,2000)})"
-                                  class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all"
-                                  :class="copied ? 'bg-success text-white' : 'bg-primary text-white hover:bg-primary-hover'">
-                            <span x-text="copied ? '{{t $.Lang "share_copied"}}' : '{{t $.Lang "share_copy"}}'"></span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <form method="POST" action="/games/{{$g.ID}}/delete" onsubmit="return confirm('{{t $.Lang "confirm_delete"}}')" class="inline-block">
-                      <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors" title="Delete">🗑</button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
+        <!-- Games list -->
+        <div class="divide-y divide-slate-50">
+          {{range $i, $g := .Games}}
+          <div class="game-row group flex items-center gap-4 px-6 py-4 hover:bg-slate-50/80 transition-colors">
+
+            <!-- Index badge -->
+            <div class="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-primary/10 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-primary transition-all shrink-0">{{inc $i}}</div>
+
+            <!-- Title + desc -->
+            <div class="flex-1 min-w-0">
+              <p class="game-title font-bold text-slate-800 text-sm truncate transition-colors">{{$g.Title}}</p>
+              {{if $g.Description}}
+              <p class="text-xs text-slate-400 truncate font-medium mt-0.5 hidden sm:block">{{$g.Description}}</p>
               {{end}}
-            </tbody>
-          </table>
+            </div>
+
+            <!-- Question count -->
+            <div class="hidden md:flex items-center gap-1.5 shrink-0">
+              <span class="inline-flex items-center gap-1 bg-primary/8 text-primary px-3 py-1.5 rounded-xl text-xs font-bold border border-primary/15">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                {{$g.QuestionCount}}
+              </span>
+            </div>
+
+            <!-- Date -->
+            <div class="hidden lg:block text-xs text-slate-400 font-medium shrink-0 w-28 text-right">{{fmtTime $g.UpdatedAt}}</div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <a href="/games/{{$g.ID}}/edit?add=1" title="{{t $.Lang "add_question"}}"
+                 class="action-btn w-8 h-8 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-500 hover:bg-success hover:text-white text-sm">➕</a>
+              <a href="/play/{{$g.ID}}" title="{{t $.Lang "play_game"}}"
+                 class="action-btn w-8 h-8 flex items-center justify-center rounded-xl bg-blue-50 text-blue-500 hover:bg-info hover:text-white text-sm">▶</a>
+              <a href="/games/{{$g.ID}}/edit" title="Edit"
+                 class="action-btn w-8 h-8 flex items-center justify-center rounded-xl bg-amber-50 text-amber-500 hover:bg-warning hover:text-white text-sm">✏️</a>
+              <a href="/history?game_id={{$g.ID}}" title="History"
+                 class="action-btn w-8 h-8 flex items-center justify-center rounded-xl bg-violet-50 text-violet-500 hover:bg-primary hover:text-white text-sm">📋</a>
+
+              <!-- Share dropdown -->
+              <div x-data="{open:false, copied:false}" class="relative">
+                <button @click="open=!open" @click.outside="open=false" title="{{t $.Lang "share_game"}}"
+                        class="action-btn w-8 h-8 flex items-center justify-center rounded-xl bg-pink-50 text-pink-500 hover:bg-accent hover:text-white text-sm">🔗</button>
+                <div x-show="open" x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     class="absolute right-0 top-full mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 w-80">
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2.5">{{t $.Lang "share_link"}}</p>
+                  <div class="flex gap-2">
+                    <input type="text" readonly :value="`${window.location.origin}/shared/{{$g.ShareToken}}`"
+                           class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-600 min-w-0"/>
+                    <button @click="navigator.clipboard.writeText(`${window.location.origin}/shared/{{$g.ShareToken}}`).then(()=>{copied=true;setTimeout(()=>copied=false,2000)})"
+                            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+                            :class="copied ? 'bg-success text-white' : 'bg-primary text-white hover:bg-primary-hover'">
+                      <span x-text="copied ? '{{t $.Lang "share_copied"}}' : '{{t $.Lang "share_copy"}}'"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <form method="POST" action="/games/{{$g.ID}}/delete" onsubmit="return confirm('{{t $.Lang "confirm_delete"}}')" class="inline-block">
+                <button title="Delete"
+                        class="action-btn w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white text-sm">🗑</button>
+              </form>
+            </div>
+          </div>
+          {{end}}
         </div>
+
         {{else}}
-        <div class="text-center py-20 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-          <div class="text-6xl mb-5 opacity-50 drop-shadow-sm">🎮</div>
-          <h3 class="text-lg font-bold text-slate-700 mb-2">{{t $.Lang "no_games"}}</h3>
-          <p class="text-slate-500 mb-6 text-sm">Оюн тизмеңиз бош.</p>
-          <a href="/games/new" class="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl text-sm font-semibold inline-flex items-center gap-2 shadow-md shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5">
-            <span>➕</span> {{t $.Lang "create_game"}}
+        <!-- Empty state -->
+        <div class="flex flex-col items-center justify-center py-20 px-6">
+          <div class="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-5xl mb-6 shadow-inner">🎮</div>
+          <h3 class="text-xl font-black text-slate-700 mb-2">{{t $.Lang "no_games"}}</h3>
+          <p class="text-slate-400 mb-8 text-sm text-center max-w-xs leading-relaxed">Биринчи оюнуңузду жасап, окуучуларыңыз менен билим жарышын баштаңыз!</p>
+          <a href="/games/new"
+             class="flex items-center gap-2 bg-primary hover:bg-primary-hover active:scale-95 text-white px-7 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/25 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            {{t $.Lang "create_game"}}
           </a>
         </div>
         {{end}}
       </div>
-      
-      {{end}} <!-- end with .Data -->
-    </main>
-  </div>
+
+      {{end}}
+    </div>
+  </main>
+</div>
 
 </body>
 </html>
