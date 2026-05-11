@@ -31,8 +31,9 @@
     <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
     
     <div class="flex flex-col sm:flex-row items-center gap-5 relative z-10 text-center sm:text-left">
-      <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl shadow-inner border-4 border-white ring-2 ring-slate-100">
-        {{.Avatar}}
+      <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl shadow-inner border-4 border-white ring-2 ring-slate-100 overflow-hidden">
+        {{if isImgPath .Avatar}}<img src="{{.Avatar}}" class="w-full h-full object-cover" alt="{{.Nickname}}"/>
+        {{else}}{{if .Avatar}}{{.Avatar}}{{else}}🐶{{end}}{{end}}
       </div>
       <div>
         <h1 class="text-3xl font-black text-slate-800">{{.Nickname}}</h1>
