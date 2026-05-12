@@ -77,7 +77,7 @@
     <!-- Logo -->
     <div class="flex flex-wrap gap-2 mb-10">
       <button type="button" @click.stop.prevent="sidebarOpen=false"
-              class="lg:hidden w-full h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-bold transition-colors">✕ Жабуу</button>
+              class="lg:hidden w-full h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-bold transition-colors">✕ {{t .Lang "close"}}</button>
       <a href="/" @click="sidebarOpen=false" class="flex items-center gap-3 px-1 group cursor-pointer flex-1 min-w-0">
         <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 overflow-hidden bg-gradient-to-br from-primary to-accent">
           <span class="text-white text-xl">🦉</span>
@@ -88,7 +88,7 @@
 
     <!-- Nav -->
     <nav class="flex flex-col gap-1.5 flex-1">
-      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-1">Меню</p>
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-1">{{t .Lang "menu"}}</p>
       <a href="/dashboard" @click="sidebarOpen=false"
          class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm bg-primary text-white shadow-md shadow-primary/30 transition-all">
         <span class="text-base">🏠</span> {{t .Lang "dashboard"}}
@@ -104,8 +104,8 @@
 
       <!-- Quick tip card -->
       <div class="mt-6 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/10">
-        <p class="text-xs font-bold text-primary mb-1">💡 Жардам</p>
-        <p class="text-xs text-slate-500 leading-relaxed">AI менен суроо жасоо үчүн Gemini API ключуңузду орнотуңуз.</p>
+        <p class="text-xs font-bold text-primary mb-1">💡 {{t .Lang "help"}}</p>
+        <p class="text-xs text-slate-500 leading-relaxed">{{t .Lang "sidebar_ai_tip"}}</p>
       </div>
     </nav>
 
@@ -166,11 +166,11 @@
           <div>
             {{with .Teacher}}
             <p class="text-white/65 text-sm font-medium mb-1 flex items-center gap-1.5">
-              <span>👋</span> Кош келдиңиз,
+              <span>👋</span> {{t $.Lang "dashboard_welcome"}}
             </p>
             <h1 class="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">{{.Name}}</h1>
             {{end}}
-            <p class="text-white/70 text-sm">Бүгүн жаңы оюн баштаңыз — окуучуларыңыз күтүп жатат!</p>
+            <p class="text-white/70 text-sm">{{t $.Lang "dashboard_subtitle"}}</p>
           </div>
           <div class="flex items-center gap-3 flex-wrap">
             <a href="/games/new"
@@ -199,7 +199,7 @@
           </div>
           <div class="relative z-10 mt-4 pt-4 border-t border-slate-100">
             <a href="/games/new" class="text-xs text-slate-400 hover:text-success transition-colors font-semibold flex items-center gap-1">
-              Жаңы оюн жасоо <span>→</span>
+              {{t $.Lang "create_game"}} <span>→</span>
             </a>
           </div>
         </div>
@@ -216,7 +216,7 @@
           </div>
           <div class="relative z-10 mt-4 pt-4 border-t border-slate-100">
             <a href="/history" class="text-xs text-slate-400 hover:text-primary transition-colors font-semibold flex items-center gap-1">
-              Тарыхты карооо <span>→</span>
+              {{t $.Lang "history"}} <span>→</span>
             </a>
           </div>
         </div>
@@ -232,7 +232,7 @@
             </div>
           </div>
           <div class="relative z-10 mt-4 pt-4 border-t border-slate-100">
-            <span class="text-xs text-slate-400 font-semibold">Жалпы катышуучулар</span>
+            <span class="text-xs text-slate-400 font-semibold">{{t $.Lang "total_players"}}</span>
           </div>
         </div>
       </div>
@@ -279,10 +279,10 @@
                      placeholder="AIzaSy..."/>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-info/5 border border-info/20 rounded-xl px-4 py-3 text-sm text-slate-600 max-w-xl">
-              <span class="font-semibold leading-snug">Gemini API key алуу үчүн Google AI Studio баракчасына кириңиз.</span>
+              <span class="font-semibold leading-snug">{{t $.Lang "gemini_key_form_hint"}}</span>
               <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener"
                  class="shrink-0 inline-flex items-center gap-2 bg-info hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
-                API key алуу ↗
+                {{t $.Lang "get_key"}} ↗
               </a>
             </div>
             <button class="bg-slate-800 hover:bg-slate-900 active:scale-95 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2">
@@ -307,7 +307,7 @@
             <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-lg">🎮</div>
             <div>
               <h2 class="text-xl font-black text-slate-800">{{t $.Lang "my_games"}}</h2>
-              {{if .Games}}<p class="text-xs text-slate-400 font-medium">{{len .Games}} оюн</p>{{end}}
+              {{if .Games}}<p class="text-xs text-slate-400 font-medium">{{len .Games}} {{t $.Lang "games_word"}}</p>{{end}}
             </div>
           </div>
           <a href="/games/new"
@@ -390,7 +390,7 @@
         <div class="flex flex-col items-center justify-center py-20 px-6">
           <div class="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-5xl mb-6 shadow-inner">🎮</div>
           <h3 class="text-xl font-black text-slate-700 mb-2">{{t $.Lang "no_games"}}</h3>
-          <p class="text-slate-400 mb-8 text-sm text-center max-w-xs leading-relaxed">Биринчи оюнуңузду жасап, окуучуларыңыз менен билим жарышын баштаңыз!</p>
+          <p class="text-slate-400 mb-8 text-sm text-center max-w-xs leading-relaxed">{{t $.Lang "no_games_desc"}}</p>
           <a href="/games/new"
              class="flex items-center gap-2 bg-primary hover:bg-primary-hover active:scale-95 text-white px-7 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/25 transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>

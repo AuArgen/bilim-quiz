@@ -101,5 +101,15 @@
   "avg_rating": "Орточо баалоо",
   "no_ratings": "Пикирлер жок",
   "game_over": "Оюн аяктады!",
-  "all_played_well": "Бардыгыңар мыктый катыштыңар!"
+  "all_played_well": "Бардыгыңар мыктый катыштыңар!",
+  "close": "Жабуу",
+  "menu": "Меню",
+  "help": "Жардам",
+  "sidebar_ai_tip": "AI менен суроо жасоо үчүн Gemini API ключуңузду орнотуңуз.",
+  "dashboard_welcome": "Кош келдиңиз,",
+  "dashboard_subtitle": "Бүгүн жаңы оюн баштаңыз — окуучуларыңыз күтүп жатат!",
+  "no_games_desc": "Биринчи оюнуңузду жасап, окуучуларыңыз менен билим жарышын баштаңыз!",
+  "games_word": "оюн",
+  "gemini_key_form_hint": "Gemini API key алуу үчүн Google AI Studio баракчасына кириңиз.",
+  "get_key": "API key алуу"
 }

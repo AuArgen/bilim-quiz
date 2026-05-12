@@ -101,5 +101,15 @@
   "avg_rating": "Average rating",
   "no_ratings": "No reviews yet",
   "game_over": "Game Over!",
-  "all_played_well": "Everyone played great!"
+  "all_played_well": "Everyone played great!",
+  "close": "Close",
+  "menu": "Menu",
+  "help": "Tip",
+  "sidebar_ai_tip": "Set your Gemini API key to generate questions using AI.",
+  "dashboard_welcome": "Welcome,",
+  "dashboard_subtitle": "Start a new game today — your students are waiting!",
+  "no_games_desc": "Create your first game and start a knowledge competition with your students!",
+  "games_word": "games",
+  "gemini_key_form_hint": "Get your Gemini API key from Google AI Studio and paste it here.",
+  "get_key": "Get API key"
 }
