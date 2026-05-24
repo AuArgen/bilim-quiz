@@ -77,7 +77,20 @@ func (r *TeacherRepo) GetAdminStats(ctx context.Context) (AdminStats, error) {
 	return s, err
 }
 
-func (r *TeacherRepo) ListForAdmin(ctx context.Context, page, perPage int, query string) ([]TeacherListItem, Pagination, error) {
+type AdminTeacherListOptions struct {
+	Page        int
+	PerPage     int
+	Query       string
+	Sort        string
+	Order       string
+	MinGames    int
+	MinSessions int
+	MinPlayers  int
+}
+
+func (r *TeacherRepo) ListForAdmin(ctx context.Context, opts AdminTeacherListOptions) ([]TeacherListItem, Pagination, error) {
+	page := opts.Page
+	perPage := opts.PerPage
 	if page < 1 {
 		page = 1
 	}
@@ -88,28 +101,45 @@ func (r *TeacherRepo) ListForAdmin(ctx context.Context, page, perPage int, query
 		perPage = 100
 	}
 
-	search := "%" + strings.ToLower(strings.TrimSpace(query)) + "%"
+	search := "%" + strings.ToLower(strings.TrimSpace(opts.Query)) + "%"
 	where := ""
 	args := []any{}
-	if strings.TrimSpace(query) != "" {
+	if strings.TrimSpace(opts.Query) != "" {
 		where = "WHERE LOWER(t.name) LIKE $1 OR LOWER(t.email) LIKE $1"
 		args = append(args, search)
 	}
 
-	countSQL := `SELECT COUNT(*) FROM teachers t ` + where
+	filterSQL, filterArgs := adminTeacherMetricFilters(len(args), opts)
+	countArgs := append(args, filterArgs...)
+	countSQL := `
+		WITH teacher_metrics AS (
+			SELECT
+			  t.id,
+			  COUNT(DISTINCT g.id) AS total_games,
+			  COUNT(DISTINCT gs.id) AS total_sessions,
+			  COALESCE(SUM(gs.total_players), 0) AS total_players
+			FROM teachers t
+			LEFT JOIN games g ON g.teacher_id = t.id
+			LEFT JOIN game_sessions gs ON gs.game_id = g.id
+			` + where + `
+			GROUP BY t.id
+		)
+		SELECT COUNT(*) FROM teacher_metrics ` + filterSQL
 	var total int
-	if err := r.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+	if err := r.db.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, Pagination{}, err
 	}
 
 	pagination := NewPagination(page, perPage, total)
 	page = pagination.Page
 	offset := (page - 1) * perPage
-	queryArgs := append(args, perPage, offset)
-	limitPos := len(args) + 1
-	offsetPos := len(args) + 2
+	queryArgs := append(append(args, filterArgs...), perPage, offset)
+	limitPos := len(args) + len(filterArgs) + 1
+	offsetPos := len(args) + len(filterArgs) + 2
+	orderBy := adminTeacherOrderBy(opts.Sort, opts.Order)
 
 	rows, err := r.db.Query(ctx, `
+		WITH teacher_metrics AS (
 		SELECT
 		  t.id, t.google_id, t.email, t.name, t.avatar_url, t.language, t.gemini_key, t.role, t.created_at,
 		  COUNT(DISTINCT g.id) AS total_games,
@@ -121,7 +151,13 @@ func (r *TeacherRepo) ListForAdmin(ctx context.Context, page, perPage int, query
 		LEFT JOIN game_sessions gs ON gs.game_id = g.id
 		`+where+`
 		GROUP BY t.id
-		ORDER BY t.created_at DESC
+		)
+		SELECT
+		  id, google_id, email, name, avatar_url, language, gemini_key, role, created_at,
+		  total_games, total_sessions, total_players, last_activity
+		FROM teacher_metrics
+		`+filterSQL+`
+		ORDER BY `+orderBy+`
 		LIMIT $`+strconv.Itoa(limitPos)+` OFFSET $`+strconv.Itoa(offsetPos),
 		queryArgs...,
 	)
@@ -148,6 +184,54 @@ func (r *TeacherRepo) ListForAdmin(ctx context.Context, page, perPage int, query
 	}
 
 	return teachers, pagination, nil
+}
+
+func adminTeacherMetricFilters(start int, opts AdminTeacherListOptions) (string, []any) {
+	var filters []string
+	var args []any
+
+	addFilter := func(column string, value int) {
+		if value <= 0 {
+			return
+		}
+		args = append(args, value)
+		filters = append(filters, column+" >= $"+strconv.Itoa(start+len(args)))
+	}
+
+	addFilter("total_games", opts.MinGames)
+	addFilter("total_sessions", opts.MinSessions)
+	addFilter("total_players", opts.MinPlayers)
+
+	if len(filters) == 0 {
+		return "", nil
+	}
+	return "WHERE " + strings.Join(filters, " AND "), args
+}
+
+func adminTeacherOrderBy(sort, order string) string {
+	column := "created_at"
+	switch sort {
+	case "games":
+		column = "total_games"
+	case "sessions":
+		column = "total_sessions"
+	case "players":
+		column = "total_players"
+	case "name":
+		column = "LOWER(name)"
+	case "created":
+		column = "created_at"
+	}
+
+	direction := "DESC"
+	if order == "asc" {
+		direction = "ASC"
+	}
+
+	if column == "LOWER(name)" {
+		return column + " " + direction + ", id DESC"
+	}
+	return column + " " + direction + ", created_at DESC, id DESC"
 }
 
 func NewPagination(page, perPage, total int) Pagination {

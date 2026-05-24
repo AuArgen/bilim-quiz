@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -23,7 +25,38 @@ type AdminUsersData struct {
 	Stats      repository.AdminStats
 	Teachers   []repository.TeacherListItem
 	Pagination repository.Pagination
-	Query      string
+	Filters    AdminUsersFilters
+	PageLinks  []AdminPageLink
+	SortLinks  AdminSortLinks
+	PrevURL    string
+	NextURL    string
+	ResetLink  string
+}
+
+type AdminUsersFilters struct {
+	Query       string
+	Sort        string
+	Order       string
+	MinGames    int
+	MinSessions int
+	MinPlayers  int
+}
+
+type AdminPageLink struct {
+	Page      int
+	URL       string
+	IsCurrent bool
+}
+
+type AdminSortLinks struct {
+	Games          string
+	Sessions       string
+	Players        string
+	Created        string
+	GamesActive    bool
+	SessionsActive bool
+	PlayersActive  bool
+	CreatedActive  bool
 }
 
 type AdminUserData struct {
@@ -56,7 +89,7 @@ type AdminPlayerData struct {
 
 func (h *AdminHandler) Users(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	query := r.URL.Query().Get("q")
+	filters := adminUsersFiltersFromRequest(r)
 
 	stats, err := h.teachers.GetAdminStats(r.Context())
 	if err != nil {
@@ -64,7 +97,16 @@ func (h *AdminHandler) Users(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	teachers, pagination, err := h.teachers.ListForAdmin(r.Context(), page, 20, query)
+	teachers, pagination, err := h.teachers.ListForAdmin(r.Context(), repository.AdminTeacherListOptions{
+		Page:        page,
+		PerPage:     20,
+		Query:       filters.Query,
+		Sort:        filters.Sort,
+		Order:       filters.Order,
+		MinGames:    filters.MinGames,
+		MinSessions: filters.MinSessions,
+		MinPlayers:  filters.MinPlayers,
+	})
 	if err != nil {
 		http.Error(w, "admin users error", http.StatusInternalServerError)
 		return
@@ -74,8 +116,120 @@ func (h *AdminHandler) Users(w http.ResponseWriter, r *http.Request) {
 		Stats:      stats,
 		Teachers:   teachers,
 		Pagination: pagination,
-		Query:      query,
+		Filters:    filters,
+		PageLinks:  adminPageLinks(r.URL.Query(), pagination),
+		SortLinks:  adminSortLinks(r.URL.Query(), filters),
+		PrevURL:    adminURLWith(r.URL.Query(), map[string]string{"page": strconv.Itoa(pagination.PrevPage)}),
+		NextURL:    adminURLWith(r.URL.Query(), map[string]string{"page": strconv.Itoa(pagination.NextPage)}),
+		ResetLink:  "/admin",
 	})
+}
+
+func adminUsersFiltersFromRequest(r *http.Request) AdminUsersFilters {
+	q := r.URL.Query()
+	f := AdminUsersFilters{
+		Query: strings.TrimSpace(q.Get("q")),
+		Sort:  q.Get("sort"),
+		Order: q.Get("order"),
+	}
+	if f.Sort == "" {
+		f.Sort = "created"
+	}
+	if f.Sort != "created" && f.Sort != "games" && f.Sort != "sessions" && f.Sort != "players" && f.Sort != "name" {
+		f.Sort = "created"
+	}
+	if f.Order != "asc" {
+		f.Order = "desc"
+	}
+
+	f.MinGames = nonNegativeInt(q.Get("min_games"))
+	f.MinSessions = nonNegativeInt(q.Get("min_sessions"))
+	f.MinPlayers = nonNegativeInt(q.Get("min_players"))
+	return f
+}
+
+func nonNegativeInt(value string) int {
+	n, _ := strconv.Atoi(value)
+	if n < 0 {
+		return 0
+	}
+	return n
+}
+
+func adminPageLinks(values url.Values, pagination repository.Pagination) []AdminPageLink {
+	if pagination.TotalPages <= 1 {
+		return nil
+	}
+
+	start := pagination.Page - 2
+	if start < 1 {
+		start = 1
+	}
+	end := start + 4
+	if end > pagination.TotalPages {
+		end = pagination.TotalPages
+		start = end - 4
+		if start < 1 {
+			start = 1
+		}
+	}
+
+	links := make([]AdminPageLink, 0, end-start+1)
+	for page := start; page <= end; page++ {
+		links = append(links, AdminPageLink{
+			Page:      page,
+			URL:       adminURLWith(values, map[string]string{"page": strconv.Itoa(page)}),
+			IsCurrent: page == pagination.Page,
+		})
+	}
+	return links
+}
+
+func adminSortLinks(values url.Values, filters AdminUsersFilters) AdminSortLinks {
+	return AdminSortLinks{
+		Games:          adminSortURL(values, filters, "games"),
+		Sessions:       adminSortURL(values, filters, "sessions"),
+		Players:        adminSortURL(values, filters, "players"),
+		Created:        adminSortURL(values, filters, "created"),
+		GamesActive:    filters.Sort == "games",
+		SessionsActive: filters.Sort == "sessions",
+		PlayersActive:  filters.Sort == "players",
+		CreatedActive:  filters.Sort == "created",
+	}
+}
+
+func adminSortURL(values url.Values, filters AdminUsersFilters, sort string) string {
+	order := "desc"
+	if filters.Sort == sort && filters.Order == "desc" {
+		order = "asc"
+	}
+	return adminURLWith(values, map[string]string{
+		"page":  "1",
+		"sort":  sort,
+		"order": order,
+	})
+}
+
+func adminURLWith(values url.Values, updates map[string]string) string {
+	next := url.Values{}
+	for key, values := range values {
+		for _, value := range values {
+			if value != "" {
+				next.Add(key, value)
+			}
+		}
+	}
+	for key, value := range updates {
+		next.Del(key)
+		if value != "" {
+			next.Set(key, value)
+		}
+	}
+	encoded := next.Encode()
+	if encoded == "" {
+		return "/admin"
+	}
+	return "/admin?" + encoded
 }
 
 func (h *AdminHandler) UserDetail(w http.ResponseWriter, r *http.Request) {
