@@ -10,7 +10,7 @@ import (
 )
 
 type AuthHandler struct {
-	teachers  *repository.TeacherRepo
+	teachers   *repository.TeacherRepo
 	onboarding onboarding.Deps
 }
 
@@ -41,11 +41,17 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	role := "teacher"
+	if auth.IsAdminEmail(gUser.Email) {
+		role = "admin"
+	}
+
 	teacher, isNew, err := h.teachers.Upsert(r.Context(), &repository.Teacher{
 		GoogleID:  gUser.ID,
 		Email:     gUser.Email,
 		Name:      gUser.Name,
 		AvatarURL: gUser.AvatarURL,
+		Role:      role,
 	})
 	if err != nil {
 		http.Error(w, "DB error", http.StatusInternalServerError)

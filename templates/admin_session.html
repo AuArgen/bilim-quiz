@@ -1,0 +1,86 @@
+{{define "admin_session.html"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{appName}} - Admin session</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="icon" type="image/jpeg" href="/static/images/icon.jpg"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/app.css"/>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']},colors:{primary:{DEFAULT:'#8B5CF6',hover:'#7C3AED'},accent:'#F472B6',success:'#34D399',warning:'#FBBF24',info:'#60A5FA',cream:'#FDFBF7'}}}}</script>
+</head>
+<body class="bg-cream text-slate-800 min-h-screen font-sans">
+<div class="max-w-5xl mx-auto px-4 py-8 lg:py-12">
+  {{with .Data}}
+  <a href="/admin/users/{{.Session.TeacherID}}" class="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary mb-6">
+    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200">←</span>
+    User activity
+  </a>
+
+  <div class="mb-8">
+    <h1 class="text-3xl font-black tracking-tight">{{with .Game}}{{.Title}}{{else}}Session{{end}}</h1>
+    <p class="text-slate-500 font-medium mt-1">{{with .Teacher}}{{.Name}} · {{.Email}}{{end}}</p>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm"><div class="text-xs uppercase font-bold text-slate-400">PIN</div><div class="text-2xl font-black">{{.Session.PinCode}}</div></div>
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm"><div class="text-xs uppercase font-bold text-slate-400">Status</div><div class="text-lg font-black">{{.Session.Status}}</div></div>
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm"><div class="text-xs uppercase font-bold text-slate-400">Players</div><div class="text-2xl font-black text-info">{{.Session.TotalPlayers}}</div></div>
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm"><div class="text-xs uppercase font-bold text-slate-400">Created</div><div class="text-sm font-black">{{fmtTime .Session.CreatedAt}}</div></div>
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm"><div class="text-xs uppercase font-bold text-slate-400">Rating</div><div class="text-lg font-black text-warning">{{fmtFloat .AvgStars}} / 5</div></div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-8">
+    <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-black">Players and scores</h2>
+      <span class="text-xs font-black text-slate-400">{{len .Players}}</span>
+    </div>
+    <div class="divide-y divide-slate-100">
+      {{range $i, $p := .Players}}
+      <a href="/admin/sessions/{{$.Data.Session.ID}}/player/{{$p.ID}}" class="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+        <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500">{{inc $i}}</div>
+        <div class="w-11 h-11 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center text-xl shrink-0">
+          {{if isImgPath $p.Avatar}}<img src="{{$p.Avatar}}" class="w-full h-full object-cover" alt=""/>{{else}}{{if $p.Avatar}}{{$p.Avatar}}{{else}}?{{end}}{{end}}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-black truncate">{{$p.Nickname}}</div>
+          {{if $p.FinishedAt}}<div class="text-xs text-slate-400 font-bold">Finished {{fmtTime $p.FinishedAt}}</div>{{end}}
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-black text-primary">{{$p.FinalScore}}</div>
+          <div class="text-xs text-slate-400 font-bold">points</div>
+        </div>
+      </a>
+      {{else}}
+      <div class="px-5 py-10 text-center text-slate-400 font-bold">No players in this session.</div>
+      {{end}}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 bg-slate-50 border-b border-slate-100">
+      <h2 class="font-black">Ratings</h2>
+    </div>
+    {{if .Ratings}}
+    <div class="divide-y divide-slate-100">
+      {{range .Ratings}}
+      <div class="px-5 py-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="font-black">{{.Nickname}}</div>
+          <div class="text-warning font-black">{{starsFromInt .Stars}}</div>
+        </div>
+        {{if .Comment}}<p class="text-sm text-slate-500 mt-1">{{.Comment}}</p>{{end}}
+      </div>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="px-5 py-8 text-center text-slate-400 font-bold">No ratings yet.</div>
+    {{end}}
+  </div>
+  {{end}}
+</div>
+</body>
+</html>
+{{end}}

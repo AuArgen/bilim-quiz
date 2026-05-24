@@ -10,6 +10,7 @@ type Teacher struct {
 	AvatarURL string
 	Language  string
 	GeminiKey string
+	Role      string
 	CreatedAt time.Time
 }
 
@@ -106,6 +107,30 @@ type TeacherStats struct {
 	TotalGames    int
 	TotalSessions int
 	TotalPlayers  int
+}
+
+type AdminStats struct {
+	TotalTeachers int
+	TotalGames    int
+	TotalSessions int
+	TotalPlayers  int
+}
+
+type Pagination struct {
+	Page       int
+	PerPage    int
+	Total      int
+	TotalPages int
+	HasPrev    bool
+	HasNext    bool
+	PrevPage   int
+	NextPage   int
+}
+
+type TeacherListItem struct {
+	Teacher
+	Stats        TeacherStats
+	LastActivity *time.Time
 }
 
 type SessionRating struct {

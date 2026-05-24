@@ -55,15 +55,16 @@ func main() {
 
 	// Handlers
 	ob := onboarding.Deps{Games: gameRepo, Questions: questionRepo}
-	authH    := handlers.NewAuthHandler(teacherRepo, ob)
+	authH := handlers.NewAuthHandler(teacherRepo, ob)
 	teacherH := handlers.NewTeacherHandler(teacherRepo, gameRepo)
 	historyH := handlers.NewHistoryHandler(sessionRepo, gameRepo, teacherRepo)
-	aiH      := handlers.NewAIHandler(teacherRepo, questionRepo)
-	gameH    := handlers.NewGameHandler(gameRepo, questionRepo)
+	aiH := handlers.NewAIHandler(teacherRepo, questionRepo)
+	gameH := handlers.NewGameHandler(gameRepo, questionRepo)
 	studentH := handlers.NewStudentHandler(sessionRepo, questionRepo)
-	playH    := handlers.NewPlayHandler(gameRepo, sessionRepo, questionRepo)
-	wsH      := handlers.NewWSHandler(sessionRepo, questionRepo)
-	sharedH  := handlers.NewSharedHandler(gameRepo, sessionRepo, questionRepo, teacherRepo)
+	playH := handlers.NewPlayHandler(gameRepo, sessionRepo, questionRepo)
+	wsH := handlers.NewWSHandler(sessionRepo, questionRepo)
+	sharedH := handlers.NewSharedHandler(gameRepo, sessionRepo, questionRepo, teacherRepo)
+	adminH := handlers.NewAdminHandler(teacherRepo, gameRepo, sessionRepo)
 
 	r := chi.NewRouter()
 
@@ -153,6 +154,16 @@ func main() {
 
 		// AI
 		r.Post("/api/ai/generate", aiH.Generate)
+	})
+
+	// Admin routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireAdmin(teacherRepo))
+
+		r.Get("/admin", adminH.Users)
+		r.Get("/admin/users/{id}", adminH.UserDetail)
+		r.Get("/admin/sessions/{id}", adminH.SessionDetail)
+		r.Get("/admin/sessions/{id}/player/{player_id}", adminH.PlayerDetail)
 	})
 
 	// Shared game routes (require auth)

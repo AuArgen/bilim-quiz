@@ -101,6 +101,12 @@
          class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-600 hover:bg-success/10 hover:text-success transition-all">
         <span class="text-base">📋</span> {{t .Lang "history"}}
       </a>
+      {{with .Data}}{{with .Teacher}}{{if eq .Role "admin"}}
+      <a href="/admin" @click="sidebarOpen=false"
+         class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-slate-600 hover:bg-info/10 hover:text-info transition-all">
+        <span class="text-base">Admin</span> Users
+      </a>
+      {{end}}{{end}}{{end}}
 
       <!-- Quick tip card -->
       <div class="mt-6 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/10">
